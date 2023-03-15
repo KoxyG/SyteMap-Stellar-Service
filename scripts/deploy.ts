@@ -6,14 +6,14 @@ async function main() {
 
   const lockedAmount = ethers.utils.parseEther("0.001");
 
-  const Lock = await ethers.getContractFactory("Lock");
-  const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
+  const Sytemap = await ethers.getContractFactory("SytemapAssetRegistry");
+  const sytemapNft = await Sytemap.deploy("hthhhhhhhhhhhhh");
 
-  await lock.deployed();
+  await sytemapNft.deployed();
 
   console.log(
     `Lock with ${ethers.utils.formatEther(lockedAmount)}ETH and unlock timestamp ${unlockTime} deployed to ${
-      lock.address
+      sytemapNft.address
     }`,
   );
 }

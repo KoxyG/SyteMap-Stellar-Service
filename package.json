@@ -14,18 +14,20 @@
     "hardhat",
     "real-estate"
   ],
+
   "scripts": {
-    "test": "hardhat test --network hardhat",
+    "test": "hardhat test --network localhost",
     "size": "hardhat size-contracts",
     "clean": "hardhat clean",
     "serve": "npx hardhat node",
     "compile": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat compile",
+    "local:run":"hardhat console --network localhost",
     "fork": "hardhat node --fork https://mainnet.infura.io/v3/460f40a260564ac4a4f4b3fffb032dad",
     "deploy": "hardhat run --network localhost scripts/deploy.ts",
-    "deploy-goerli": "hardhat run --network goerli scripts/deploy.ts",
+    "deploy-goerli": "hardhat run --network matic scripts/deploy.ts",
     "deploy-binance": "hardhat run --network binance scripts/deploy.ts",
     "accounts": "hardhat accounts",
-    "runlocal": "hardhat run --network hardhat tasks/deploy",
+    "runlocal": "hardhat run --network localhost scripts/deploy.ts",
     "balance": "hardhat balance",
     "send": "hardhat send",
     "generate:docs": "hardhat docgen",
