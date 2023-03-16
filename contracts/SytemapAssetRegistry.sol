@@ -184,6 +184,7 @@ contract SytemapAssetRegistry is
     ) external onlyOwner returns (bool) {
         require(_priceOfPlot > 0, "Plot Price must be greater than 0.");
         require(msg.sender != address(0));
+        require(_checkPvnExists(_propertyVerificationNo), "ERC721: pvn token does not exist or not been minted");
 
         _pvnToPropertInfo[_propertyVerificationNo].priceOfPlot = _priceOfPlot;
 
@@ -194,11 +195,13 @@ contract SytemapAssetRegistry is
 
     /// @notice gets the a particular property info by their pvn
     function getPropertyInfoDetails(uint256 _propertyVerificationNo) public view returns (PropertyInffo memory) {
+        require(_checkPvnExists(_propertyVerificationNo), "ERC721: pvn token does not exist or not been minted");
         return _pvnToPropertInfo[_propertyVerificationNo];
     }
 
-    // get total number of tokens owned by an address
+    // get total number of oroperty tokens owned by an address
     function getTotalNumberOfPropertyOwnedByAnAddress(address _owner) public view returns (uint256) {
+        require(msg.sender != address(0));
         uint256 totalNumberOfTokensOwned = balanceOf(_owner);
         return totalNumberOfTokensOwned;
     }

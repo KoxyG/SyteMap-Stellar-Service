@@ -6,8 +6,9 @@ import "solidity-coverage";
 import { HardhatUserConfig } from "hardhat/config";
 import * as env from "./utils/env";
 import { NetworksUserConfig } from "hardhat/types";
-const polygonNodeUrl = "https://polygon-mumbai.g.alchemy.com/v2/mhubXm17W27tcT-Sw6Lmpmrc2Mmq3Sgb";
-const privatePolygonKey = "38bf8d751f731a2922c7aacbed07c4d3d26893f42ca4cf4f7d5d259633f3e267";
+
+const NODE_URI_ = process.env.NODE_URI_;
+const PRIVATE_KEYS = process.env.PRIVATE_KEY;
 
 const chainIds = {
   goerli: 5,
@@ -46,8 +47,8 @@ const config: HardhatUserConfig | any = {
       gasPrice: 8000000000,
     },
     goerli: getChainConfig("goerli"),
-    binance: getChainConfig("binance"),
-    matic: { accounts: [privatePolygonKey], url: polygonNodeUrl },
+    binance: { accounts: [PRIVATE_KEYS], url: NODE_URI_ },
+    // matic: { accounts: [privatePolygonKey], url: polygonNodeUrl },
   },
   paths: {
     artifacts: "./artifacts",
