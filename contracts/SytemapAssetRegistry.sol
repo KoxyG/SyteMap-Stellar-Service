@@ -150,15 +150,16 @@ contract SytemapAssetRegistry is
     ) public payable onlyOwner nonReentrant {
         // require(!isProductVerificationNoExist(_propertyVerificationNo), "Token URI already exists");
         require(!_checkPvnExists(_propertyVerificationNo), "ERC721: pvn token already minted");
+        require(msg.sender != address(0), "ERC721: invalid address");
+        require(_buyerWalletId != address(0) && _buyerWalletId != address(this), "ERC721: invalid address");
 
         // Mint token directly to buyer
         _safeMint(_buyerWalletId, _propertyVerificationNo);
         // Set the tokens metadata
         _setTokenURI(_propertyVerificationNo, _tokenURL);
-        // Store creator of the property
-        _tokenOwners.set(_propertyVerificationNo, _buyerWalletId);
-        _holderTokens[_buyerWalletId].add(_propertyVerificationNo);
-        // Add to Storage data
+        _addPropertyTokenToOwnerEnumeration(_buyerWalletId, _propertyVerificationNo);
+        _addPropertyTokenToHolderEnumeration(_buyerWalletId, _propertyVerificationNo);
+        // Store property token properties in property info table mapping
         _addNewPropertyInfo(
             _plotNo,
             _tokenURL,
@@ -183,7 +184,7 @@ contract SytemapAssetRegistry is
         uint256 _priceOfPlot
     ) external onlyOwner returns (bool) {
         require(_priceOfPlot > 0, "Plot Price must be greater than 0.");
-        require(msg.sender != address(0));
+        require(msg.sender != address(0), "ERC721: invalid address");
         require(_checkPvnExists(_propertyVerificationNo), "ERC721: pvn token does not exist or not been minted");
 
         _pvnToPropertInfo[_propertyVerificationNo].priceOfPlot = _priceOfPlot;
@@ -221,6 +222,20 @@ contract SytemapAssetRegistry is
     function tokenURI(uint256 tokenId) public view virtual override(ERC721, ERC721URIStorage) returns (string memory) {
         require(_exists(tokenId), "URI query of nonexistent token");
         return _tokenURIs[tokenId];
+    }
+
+    function getAllMintedPropertyDetails() public view returns (PropertyInffo[] memory) {
+        uint256 itemCount = totalSupply();
+        uint256 currentIndex = 0;
+
+        PropertyInffo[] memory items = new PropertyInffo[](itemCount);
+        for (uint256 i = 0; i < itemCount; i++) {
+            uint256 currentId = i + 1;
+            PropertyInffo storage currentItem = _pvnToPropertInfo[currentId];
+            items[currentIndex] = currentItem;
+            currentIndex += 1;
+        }
+        return items;
     }
 
     /*********************** Internal methods *******************/
@@ -302,5 +317,33 @@ contract SytemapAssetRegistry is
 
     function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
         super._burn(tokenId);
+    }
+
+    /**
+     * @dev Private function to add a token to this extension's ownership-tracking data structures.
+     * @param _buyerWalletId address representing the new owner of the given token ID
+     * @param _propertyVerificationNo uint256 ID of the token to be added to the tokens list of the given address
+     */
+    function _addPropertyTokenToOwnerEnumeration(address _buyerWalletId, uint256 _propertyVerificationNo) private {
+        _tokenOwners.set(_propertyVerificationNo, _buyerWalletId);
+    }
+
+    /**
+     * @dev Private function to add a token to this extension's holder-tracking data structures.
+     * @param _buyerWalletId address representing the new owner of the given token ID
+     * @param _propertyVerificationNo uint256 ID of the token to be added to the tokens list of the given address
+     */
+    function _addPropertyTokenToHolderEnumeration(address _buyerWalletId, uint256 _propertyVerificationNo) private {
+        _holderTokens[_buyerWalletId].add(_propertyVerificationNo);
+    }
+
+    /**
+     * @dev Private function to remove a token from this extension's ownership-tracking data structures. When an nft is burned
+     * @param _buyerWalletId address representing the previous owner of the given token ID
+     * @param _propertyVerificationNo uint256 ID of the token to be removed from the tokens list of the given address
+     */
+    function _removeTokenFromOwnerEnumeration(address _buyerWalletId, uint256 _propertyVerificationNo) private {
+        _holderTokens[_buyerWalletId].remove(_propertyVerificationNo);
+        _tokenOwners.remove(_propertyVerificationNo);
     }
 }

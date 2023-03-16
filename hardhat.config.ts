@@ -3,12 +3,16 @@ import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
+import "hardhat-watcher";
 import { HardhatUserConfig } from "hardhat/config";
-import * as env from "./utils/env";
-import { NetworksUserConfig } from "hardhat/types";
+import dotenv from "dotenv";
 
-const NODE_URI_ = process.env.NODE_URI_;
-const PRIVATE_KEYS = process.env.PRIVATE_KEY;
+dotenv.config();
+
+const NODE_URI_ = process.env.NODE_URI_ || "1".repeat(32);
+const PRIVATE_KEYS = process.env.PRIVATE_KEY || "1".repeat(64);
+
+const url = "https://rpc.ankr.com/bsc_testnet_chapel";
 
 const chainIds = {
   goerli: 5,
@@ -18,13 +22,6 @@ const chainIds = {
   binance: 97,
   ropsten: 3,
 };
-
-function getChainConfig(network: string) {
-  return {
-    url: env.getNodeUrl(`${String(network)}`),
-    accounts: env.getAccounts(`${String(network)}`),
-  } as NetworksUserConfig | any;
-}
 
 const config: HardhatUserConfig | any = {
   defaultNetwork: "hardhat",
@@ -46,7 +43,7 @@ const config: HardhatUserConfig | any = {
       gas: 2100000,
       gasPrice: 8000000000,
     },
-    goerli: getChainConfig("goerli"),
+    // goerli: getChainConfig("goerli"),
     binance: { accounts: [PRIVATE_KEYS], url: NODE_URI_ },
     // matic: { accounts: [privatePolygonKey], url: polygonNodeUrl },
   },
@@ -75,6 +72,11 @@ const config: HardhatUserConfig | any = {
   typechain: {
     outDir: "typechain/types",
     target: "ethers-v5",
+  },
+  watcher: {
+    compilation: {
+      tasks: ["test"],
+    },
   },
 };
 
