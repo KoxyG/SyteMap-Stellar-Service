@@ -53,11 +53,12 @@ interface ISytemapAssetRegistry {
         address buyerWalletId,
         string estateCompanyName,
         uint256 propertyVerificationNo,
+        uint256 tokenId,
         uint256 timestamp
     );
    
    event TokenMinted(
-        address indexed to,
+        uint256 indexed tokenId,
         uint256 indexed propertyVerificationNo,
         string tokenURL
     );
@@ -88,6 +89,6 @@ interface ISytemapAssetRegistry {
     function changePropertyPriceByOwner(uint256 _propId, uint256 _newPrice ) external returns(bool);
     function getTotalNumberOfPropertyOwnedByAnAddress(address _owner) external view returns(uint256);
     function getNumberOfPropertyTokensMinted() external view returns(uint256);
-    function getPropertyInfoDetails(uint256 propertyVerificationNo) external view returns(PropertyInffo memory);
+    function getAllMintedPropertyDetails() external view returns(PropertyInffo[] memory);
 
 }

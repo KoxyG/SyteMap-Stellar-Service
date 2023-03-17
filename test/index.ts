@@ -84,10 +84,6 @@ describe("Sytemap contract", function () {
         timestamp: timestamp.toNumber(),
       };
 
-      const txRespons = await sytemapInstance.getOwnedNfts();
-      const txRespon = await sytemapInstance.getNumberOfPropertyTokensMinted();
-
-      console.log({ res, txRespons, txRespon });
       expect(res.propertyVerificationNo).to.equal(propertyInfo.propertyVerificationNo);
     });
     //   it("Should check NewPropertyInfoAdded event is emitted ", async () => {
