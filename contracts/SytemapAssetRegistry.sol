@@ -243,9 +243,14 @@ contract SytemapAssetRegistry is
         uint256 tokenCount = balanceOf(owner);
         PropertyInffo[] memory propertyDetailsList = new PropertyInffo[](tokenCount);
 
-        for (uint256 i = 0; i < tokenCount; ++i) {
+        for (uint256 i = 0; i < tokenCount;) {
             uint256 tokenId = tokenOfOwnerByIndex(owner, i);
             propertyDetailsList[i] = _pvnToPropertInfo[tokenId];
+
+
+            unchecked {
+                ++i;
+            }
         }
 
         return propertyDetailsList;
@@ -254,10 +259,13 @@ contract SytemapAssetRegistry is
     function getAllMintedPropertyDetails() external view returns (PropertyInffo[] memory) {
         uint256 totalProperties = _tokenIdTracker.current();
         PropertyInffo[] memory allDetails = new PropertyInffo[](totalProperties);
-        for (uint256 i = 0; i < totalProperties; ++i) {
+        for (uint256 i = 0; i < totalProperties;) {
             uint256 tokenId = tokenByIndex(i);
-            // uint256 propertyNumber = tokenIdToPropertyNumber(tokenId);
             allDetails[i] = _pvnToPropertInfo[tokenId];
+
+            unchecked {
+                ++i;
+            }
         }
         return allDetails;
     }
