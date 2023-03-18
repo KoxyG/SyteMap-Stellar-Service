@@ -20,7 +20,7 @@
     "size": "hardhat size-contracts",
     "clean": "hardhat clean",
     "serve": "npx hardhat node",
-    "verify": "npx hardhat verify --network binance 0x790aF09c0433E957CeBB2C8E6a4EC490d1d21bE9",
+    "verify": "npx hardhat verify --contract contracts/contractV1.sol:V1 <insert V1 address> --network binance",
     "compile": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat compile",
     "local:run": "hardhat console --network localhost",
     "fork": "hardhat node --fork https://mainnet.infura.io/v3/460f40a260564ac4a4f4b3fffb032dad",

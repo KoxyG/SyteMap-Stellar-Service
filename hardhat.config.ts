@@ -12,7 +12,7 @@ dotenv.config();
 const NODE_URI_ = process.env.NODE_URI_ || "1".repeat(32);
 const PRIVATE_KEYS = process.env.PRIVATE_KEY || "1".repeat(64);
 
-const url = "https://rpc.ankr.com/bsc_testnet_chapel";
+// const url = "https://rpc.ankr.com/bsc_testnet_chapel";
 
 const chainIds = {
   goerli: 5,

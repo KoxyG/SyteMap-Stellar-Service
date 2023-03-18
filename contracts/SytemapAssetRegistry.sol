@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity >=0.6.0 <0.9.0;
 
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
@@ -73,7 +73,7 @@ contract SytemapAssetRegistry is
     // Enumerable mapping from token ids to their owners
     EnumerableMap.UintToAddressMap private _tokenOwners;
 
-    // Mapping  property verification number to token ID 
+    // Mapping  property verification number to token ID
     mapping(uint256 => uint256) private _propertyVerificationNumberToTokenId;
 
     /*********************** Constructor *******************/
@@ -121,6 +121,18 @@ contract SytemapAssetRegistry is
         return _tokenOwners.length();
     }
 
+ function tokenURI(
+        uint256 tokenId
+    ) public view virtual override(ERC721, ERC721URIStorage) returns (string memory) {
+        require(_exists(tokenId), "ERC721URIStorage: URI query for nonexistent token");
+        return _tokenURIs[tokenId];
+    }
+
+    function tokenByIndex(uint256 index) public view override returns (uint256) {
+        require(index < totalSupply(), "ERC721Enumerable: invalid index");
+        return index + 1;
+    }
+
     /**
      * @dev Creates a new NFT and mints it to the caller of the function.
      * @param _plotNo The plot number.
@@ -147,11 +159,11 @@ contract SytemapAssetRegistry is
         address _buyerWalletId,
         string memory _estateCompanyName,
         uint256 _propertyVerificationNo
-    ) public payable onlyOwner nonReentrant {
+    ) external payable onlyOwner nonReentrant {
         // require(!isProductVerificationNoExist(_propertyVerificationNo), "Token URI already exists");
         require(!_checkPvnExists(_propertyVerificationNo), "ERC721: pvn token already minted");
-        require(msg.sender != address(0), "ERC721: invalid address");
-        require(_buyerWalletId != address(0) && _buyerWalletId != address(this), "ERC721: invalid address");
+        require(_buyerWalletId != address(0), "ERC721: invalid address");
+        require(_buyerWalletId != address(this), "ERC721: invalid address");
         _tokenIdTracker.increment();
         uint256 tokenId = _tokenIdTracker.current();
         // Mint token directly to buyer
@@ -176,7 +188,7 @@ contract SytemapAssetRegistry is
             _buyerWalletId,
             _estateCompanyName,
             _propertyVerificationNo,
-             tokenId
+            tokenId
         );
         emit TokenMinted(tokenId, _propertyVerificationNo, _tokenURL);
     }
@@ -191,8 +203,8 @@ contract SytemapAssetRegistry is
         require(_priceOfPlot > 0, "Plot Price must be greater than 0.");
         require(msg.sender != address(0), "ERC721: invalid address");
         require(_checkPvnExists(_propertyVerificationNo), "ERC721: pvn token does not exist or not been minted");
-        
-        uint256 tokenId = propertyNumberToTokenId(_propertyVerificationNo);
+
+        uint256 tokenId = _propertyNumberToTokenId(_propertyVerificationNo);
         _pvnToPropertInfo[tokenId].priceOfPlot = _priceOfPlot;
 
         emit PropertyInfoPriceChanged(msg.sender, _propertyVerificationNo, _priceOfPlot);
@@ -201,37 +213,37 @@ contract SytemapAssetRegistry is
     }
 
     /// @notice gets the a particular property info by their pvn
-    function getPropertyInfoDetailsByPVN(uint256 _propertyVerificationNo) public view returns (PropertyInffo memory) {
+    function getPropertyInfoDetailsByPVN(uint256 _propertyVerificationNo) external view returns (PropertyInffo memory) {
         require(_checkPvnExists(_propertyVerificationNo), "ERC721: pvn token does not exist or not been minted");
-        uint256 tokenId = propertyNumberToTokenId(_propertyVerificationNo);
+        uint256 tokenId = _propertyNumberToTokenId(_propertyVerificationNo);
         return _pvnToPropertInfo[tokenId];
     }
 
     // get total number of oroperty tokens owned by an address
-    function getTotalNumberOfPropertyOwnedByAnAddress(address _owner) public view returns (uint256) {
+    function getTotalNumberOfPropertyOwnedByAnAddress(address _owner) external view returns (uint256) {
         require(msg.sender != address(0));
         uint256 totalNumberOfTokensOwned = balanceOf(_owner);
         return totalNumberOfTokensOwned;
     }
 
     // get total number of tokens minted so far
-    function getNumberOfPropertyTokensMinted() public view returns (uint256) {
+    function getNumberOfPropertyTokensMinted() external view returns (uint256) {
         uint256 totalNumberOfTokensMinted = totalSupply();
         return totalNumberOfTokensMinted;
     }
 
     // get owner of a property verufucatio no
-    function getPropertyVerificationNoOwner(uint256 _propertyVerificationNo) public view returns (address) {
-        uint256 tokenId = propertyNumberToTokenId(_propertyVerificationNo);
+    function getPropertyVerificationNoOwner(uint256 _propertyVerificationNo) external view returns (address) {
+        uint256 tokenId = _propertyNumberToTokenId(_propertyVerificationNo);
         address _tokenOwner = ownerOf(tokenId);
         return _tokenOwner;
     }
 
-    function getAllPropertyDetailsByOwner(address owner) public view returns (PropertyInffo[] memory) {
+    function getAllPropertyDetailsByOwner(address owner) external view returns (PropertyInffo[] memory) {
         uint256 tokenCount = balanceOf(owner);
         PropertyInffo[] memory propertyDetailsList = new PropertyInffo[](tokenCount);
 
-        for (uint256 i = 0; i < tokenCount; i++) {
+        for (uint256 i = 0; i < tokenCount; ++i) {
             uint256 tokenId = tokenOfOwnerByIndex(owner, i);
             propertyDetailsList[i] = _pvnToPropertInfo[tokenId];
         }
@@ -239,29 +251,15 @@ contract SytemapAssetRegistry is
         return propertyDetailsList;
     }
 
-    function getAllMintedPropertyDetails() public view returns (PropertyInffo[] memory) {
+    function getAllMintedPropertyDetails() external view returns (PropertyInffo[] memory) {
         uint256 totalProperties = _tokenIdTracker.current();
         PropertyInffo[] memory allDetails = new PropertyInffo[](totalProperties);
-        for (uint256 i = 0; i < totalProperties; i++) {
+        for (uint256 i = 0; i < totalProperties; ++i) {
             uint256 tokenId = tokenByIndex(i);
             // uint256 propertyNumber = tokenIdToPropertyNumber(tokenId);
             allDetails[i] = _pvnToPropertInfo[tokenId];
         }
         return allDetails;
-    }
-
-    function tokenURI(uint256 tokenId) public view virtual override(ERC721, ERC721URIStorage) returns (string memory) {
-        require(_exists(tokenId), "ERC721URIStorage: URI query for nonexistent token");
-        return _tokenURIs[tokenId];
-    }
-
-    function tokenByIndex(uint256 index) public view override returns (uint256) {
-        require(index < totalSupply(), "ERC721Enumerable: invalid index");
-        return index + 1;
-    }
-
-    function propertyNumberToTokenId(uint256 _propertyVerificationNo) public view returns (uint256) {
-        return _propertyVerificationNumberToTokenId[_propertyVerificationNo];
     }
 
     /*********************** Internal methods *******************/
@@ -341,7 +339,7 @@ contract SytemapAssetRegistry is
      * and stop existing when they are burned (`_burn`).
      */
     function _checkPvnExists(uint256 _propertyVerificationNo) internal view returns (bool) {
-        uint256 tokenID = propertyNumberToTokenId(_propertyVerificationNo);
+        uint256 tokenID = _propertyNumberToTokenId(_propertyVerificationNo);
         return _tokenOwners.contains(tokenID);
     }
 
@@ -373,7 +371,7 @@ contract SytemapAssetRegistry is
      * @param _propertyVerificationNo uint256 ID of the token to be added to the tokens list of the given address
      */
     function _mapPropertyVerificationNumberToTokenId(uint256 _tokenId, uint256 _propertyVerificationNo) private {
-        _propertyVerificationNumberToTokenId[_propertyVerificationNo] = _tokenId; 
+        _propertyVerificationNumberToTokenId[_propertyVerificationNo] = _tokenId;
     }
 
     /**
@@ -384,5 +382,9 @@ contract SytemapAssetRegistry is
     function _removeTokenFromOwnerEnumeration(address _buyerWalletId, uint256 _tokenId) private {
         _holderTokens[_buyerWalletId].remove(_tokenId);
         _tokenOwners.remove(_tokenId);
+    }
+
+    function _propertyNumberToTokenId(uint256 _propertyVerificationNo) internal view returns (uint256) {
+        return _propertyVerificationNumberToTokenId[_propertyVerificationNo];
     }
 }
