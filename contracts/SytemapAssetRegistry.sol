@@ -170,7 +170,7 @@ contract SytemapAssetRegistry is
         address _buyerWalletId,
         string memory _estateCompanyName,
         uint256 _propertyVerificationNo
-    ) external payable onlyOwner nonReentrant {
+    ) external onlyOwner nonReentrant {
         // require(!isProductVerificationNoExist(_propertyVerificationNo), "Token URI already exists");
         require(!_checkPvnExists(_propertyVerificationNo), "ERC721: pvn token already minted");
         require(_buyerWalletId != address(0), "ERC721: invalid address");
@@ -187,7 +187,7 @@ contract SytemapAssetRegistry is
         _mapPropertyVerificationNumberToTokenId(tokenId, _propertyVerificationNo); // generate token id from counter
 
         // Set the land property details for the token
-        _addNewPropertyInfo(
+        _saveMetadataOfPropertyNFT(
             _plotNo,
             _tokenURL,
             _estateName,
@@ -296,7 +296,7 @@ contract SytemapAssetRegistry is
      * @param _estateCompanyName The estate company name registering the asset
      * @param _propertyVerificationNo The property verification No for any asset
      */
-    function _addNewPropertyInfo(
+    function _saveMetadataOfPropertyNFT(
         uint256 _plotNo,
         string memory _tokenURL,
         string memory _estateName,

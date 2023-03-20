@@ -79,7 +79,7 @@ interface ISytemapAssetRegistry {
         address buyerWalletId,
         string memory estateCompanyName,
         uint256 propertyVerificationNo
-    ) external payable;
+    ) external;
 
     function changePropertyPriceByOwner(uint256 _propId, uint256 _newPrice) external returns (bool);
 
