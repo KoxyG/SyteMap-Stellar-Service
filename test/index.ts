@@ -85,7 +85,17 @@ describe("Sytemap contract", function () {
         timestamp: timestamp.toNumber(),
       };
 
+      const txResponspvn = await sytemapInstance.getPropertyVerificationNoOwner(46);
+      const txResponindex = await sytemapInstance.tokenByIndex(0);
+      const details = await sytemapInstance.getNumberOfPropertyTokensMinted();
+      const ownerTokens = await sytemapInstance.getTotalNumberOfPropertyOwnedByAnAddress(
+        "0xbDA5747bFD65F08deb54cb465eB87D40e51B197E",
+      );
+      const tokenDetailsBypVN = await sytemapInstance.getPropertyInfoDetailsByPVN(46);
+      const newBaseUrl = await sytemapInstance.setBaseURI("http://localhost");
+      const tokenUrl = await sytemapInstance.tokenURI(46);
 
+      console.log({ res, newBaseUrl, tokenUrl, ownerTokens, details, txResponspvn, txResponindex, tokenDetailsBypVN });
       expect(res.propertyVerificationNo).to.equal(propertyInfo.propertyVerificationNo);
     });
     //   it("Should check NewPropertyInfoAdded event is emitted ", async () => {

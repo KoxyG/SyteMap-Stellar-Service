@@ -45,12 +45,12 @@ contract SytemapAssetRegistry is
      * @notice The name of the token.
      * @return Sytemap coin
      */
-    string public constant _sytemapName = "Sytemap Coin";
+    string public constant SYTEMAP_NAME = "Sytemap Coin";
     /**
      * @notice The symbol of the token.
      * @return Stmsp
      */
-    string public constant _sytemapSymbol = "STYE";
+    string public constant SYTEMAP_SYMBOL = "STYE";
 
     Counters.Counter private _tokenIdTracker;
 
@@ -61,11 +61,6 @@ contract SytemapAssetRegistry is
      * @notice is one to many mapping, meaning that a single property could have more that one asset
      */
     mapping(uint256 => PropertyInffo) private _pvnToPropertInfo;
-
-    /**
-     * @dev mapping from tokentId to tokenUri
-     */
-    mapping(uint256 => string) private _tokenURIs;
 
     // Mapping from holder address to their (enumerable) set of owned tokens
     mapping(address => EnumerableSet.UintSet) private _holderTokens;
@@ -83,7 +78,7 @@ contract SytemapAssetRegistry is
      * name in our case is `Sytemap Coin` and symbol is `STYE`.
      * Constructor for Sytemap Coin takes in the baseURI to set _baseTokenURI for the collection.
      */
-    constructor(string memory baseURI) ERC721(_sytemapName, _sytemapSymbol) {
+    constructor(string memory baseURI) ERC721(SYTEMAP_NAME, SYTEMAP_SYMBOL) {
         setBaseURI(baseURI);
     }
 
@@ -131,7 +126,7 @@ contract SytemapAssetRegistry is
         // _tokenOwners are indexed by tokenIDs, so .length() returns the number of tokenIDs
         return _tokenOwners.length();
     }
-    
+
     function tokenURI(uint256 _propertyVerificationNo)
         public
         view
@@ -395,16 +390,6 @@ contract SytemapAssetRegistry is
      */
     function _mapPropertyVerificationNumberToTokenId(uint256 _tokenId, uint256 _propertyVerificationNo) private {
         _propertyVerificationNumberToTokenId[_propertyVerificationNo] = _tokenId;
-    }
-
-    /**
-     * @dev Private function to remove a token from this extension's ownership-tracking data structures. When an nft is burned
-     * @param _buyerWalletId address representing the previous owner of the given token ID
-     * @param _tokenId uint256 ID of the token to be removed from the tokens list of the given address
-     */
-    function _removeTokenFromOwnerEnumeration(address _buyerWalletId, uint256 _tokenId) private {
-        _holderTokens[_buyerWalletId].remove(_tokenId);
-        _tokenOwners.remove(_tokenId);
     }
 
     function _propertyNumberToTokenId(uint256 _propertyVerificationNo) internal view returns (uint256) {
