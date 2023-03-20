@@ -4,7 +4,7 @@ async function main() {
   const currentTimestampInSeconds = Math.round(Date.now() / 1000);
   const unlockTime = currentTimestampInSeconds + 60;
 
-  const lockedAmount = ethers.utils.parseEther("0.001");
+  const baseTokenURI = "ipfs://QmZbWNKJPAjxXuNFSEaksCJVd1M6DaKQViJBYPK2BdpDEP/";
 
   const Sytemap = await ethers.getContractFactory("SytemapAssetRegistry");
   const sytemapNft = await Sytemap.deploy("hthhhhhhhhhhhhh");
@@ -12,9 +12,7 @@ async function main() {
   await sytemapNft.deployed();
 
   console.log(
-    `Lock with ${ethers.utils.formatEther(lockedAmount)}ETH and unlock timestamp ${unlockTime} deployed to ${
-      sytemapNft.address
-    }`,
+    `Contract deployed with Base Url ${baseTokenURI}ETH and timestamp ${unlockTime} deployed to ${sytemapNft.address}`,
   );
 }
 

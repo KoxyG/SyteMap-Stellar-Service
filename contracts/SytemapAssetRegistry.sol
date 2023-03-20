@@ -39,7 +39,7 @@ contract SytemapAssetRegistry is
      * @dev _baseTokenURI for computing {tokenURI}. If set, the resulting URI for each
      * token will be the concatenation of the `baseURI` and the `tokenId`.
      */
-    string private _baseTokenURI;
+    string private baseTokenURI;
 
     /**
      * @notice The name of the token.
@@ -84,10 +84,21 @@ contract SytemapAssetRegistry is
      * Constructor for Sytemap Coin takes in the baseURI to set _baseTokenURI for the collection.
      */
     constructor(string memory baseURI) ERC721(_sytemapName, _sytemapSymbol) {
-        _baseTokenURI = baseURI;
+        setBaseURI(baseURI);
     }
 
-    /*********************** External methods *******************/
+    // ============ FUNCTION OVERRIDES ============
+
+    function _baseURI() internal view virtual override returns (string memory) {
+        return baseTokenURI;
+    }
+
+/**
+     * @dev This help us to change the base url even when the contract has been deployed.
+     */
+    function setBaseURI(string memory _baseTokenURI) public onlyOwner {
+        baseTokenURI = _baseTokenURI;
+    }
 
     /**
      * @dev See {IERC721-ownerOf}.
@@ -120,18 +131,23 @@ contract SytemapAssetRegistry is
         // _tokenOwners are indexed by tokenIDs, so .length() returns the number of tokenIDs
         return _tokenOwners.length();
     }
-
- function tokenURI(
-        uint256 tokenId
-    ) public view virtual override(ERC721, ERC721URIStorage) returns (string memory) {
-        require(_exists(tokenId), "ERC721URIStorage: URI query for nonexistent token");
-        return _tokenURIs[tokenId];
+    
+    function tokenURI(uint256 _propertyVerificationNo)
+        public
+        view
+        override(ERC721, ERC721URIStorage)
+        returns (string memory)
+    {
+         require(_exists(_propertyVerificationNo), "ERC721URIStorage: URI query for nonexistent token");
+        return super.tokenURI(_propertyVerificationNo);
     }
 
     function tokenByIndex(uint256 index) public view override returns (uint256) {
         require(index < totalSupply(), "ERC721Enumerable: invalid index");
         return index + 1;
     }
+
+    /*********************** External methods *******************/
 
     /**
      * @dev Creates a new NFT and mints it to the caller of the function.
@@ -243,10 +259,9 @@ contract SytemapAssetRegistry is
         uint256 tokenCount = balanceOf(owner);
         PropertyInffo[] memory propertyDetailsList = new PropertyInffo[](tokenCount);
 
-        for (uint256 i = 0; i < tokenCount;) {
+        for (uint256 i = 0; i < tokenCount; ) {
             uint256 tokenId = tokenOfOwnerByIndex(owner, i);
             propertyDetailsList[i] = _pvnToPropertInfo[tokenId];
-
 
             unchecked {
                 ++i;
@@ -259,7 +274,7 @@ contract SytemapAssetRegistry is
     function getAllMintedPropertyDetails() external view returns (PropertyInffo[] memory) {
         uint256 totalProperties = _tokenIdTracker.current();
         PropertyInffo[] memory allDetails = new PropertyInffo[](totalProperties);
-        for (uint256 i = 0; i < totalProperties;) {
+        for (uint256 i = 0; i < totalProperties; ) {
             uint256 tokenId = tokenByIndex(i);
             allDetails[i] = _pvnToPropertInfo[tokenId];
 

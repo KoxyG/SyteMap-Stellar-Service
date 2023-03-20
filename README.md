@@ -1,5 +1,17 @@
 # Sytemap Property Registry
 
+## Contracts
+
+```ml
+auth
+├─ Owned — "Simple single owner authorization"
+tokens
+├─ ERC721 — "Modern, minimalist, and gas efficient ERC721 implementation"
+├─ ERC1155 — "Minimalist and gas efficient standard ERC1155 implementation"
+utils
+├─ ReentrancyGuard — "Gas optimized reentrancy protection for smart contracts"
+```
+
 # Coverage Report
 
 | Statements                                                                               | Functions                                                                              | Lines                                                                          |
