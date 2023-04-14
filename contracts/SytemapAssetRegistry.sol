@@ -88,7 +88,7 @@ contract SytemapAssetRegistry is
         return baseTokenURI;
     }
 
-/**
+    /**
      * @dev This help us to change the base url even when the contract has been deployed.
      */
     function setBaseURI(string memory _baseTokenURI) public onlyOwner {
@@ -127,13 +127,10 @@ contract SytemapAssetRegistry is
         return _tokenOwners.length();
     }
 
-    function tokenURI(uint256 _propertyVerificationNo)
-        public
-        view
-        override(ERC721, ERC721URIStorage)
-        returns (string memory)
-    {
-         require(_exists(_propertyVerificationNo), "ERC721URIStorage: URI query for nonexistent token");
+    function tokenURI(
+        uint256 _propertyVerificationNo
+    ) public view override(ERC721, ERC721URIStorage) returns (string memory) {
+        require(_exists(_propertyVerificationNo), "ERC721URIStorage: URI query for nonexistent token");
         return super.tokenURI(_propertyVerificationNo);
     }
 
@@ -170,8 +167,7 @@ contract SytemapAssetRegistry is
         address _buyerWalletId,
         string memory _estateCompanyName,
         uint256 _propertyVerificationNo
-    ) external onlyOwner nonReentrant {
-        // require(!isProductVerificationNoExist(_propertyVerificationNo), "Token URI already exists");
+    ) external onlyOwner nonReentrant { 
         require(!_checkPvnExists(_propertyVerificationNo), "ERC721: pvn token already minted");
         require(_buyerWalletId != address(0), "ERC721: invalid address");
         require(_buyerWalletId != address(this), "ERC721: invalid address");
@@ -361,8 +357,11 @@ contract SytemapAssetRegistry is
         return _tokenOwners.contains(tokenID);
     }
 
-    function _burn(uint256 tokenId) internal override(ERC721, ERC721URIStorage) {
-        super._burn(tokenId);
+    function _burn(uint256 _propertyVerificationNo) internal virtual override(ERC721URIStorage, ERC721) {
+        // super._burn(tokenId);
+        // uint256 tokenID = _propertyNumberToTokenId(_propertyVerificationNo);
+        // delete _propertyVerificationNumberToTokenId[_propertyVerificationNo];
+        // _removeTokenFromOwnerEnumeration(_msgSender());
     }
 
     /**
@@ -394,5 +393,15 @@ contract SytemapAssetRegistry is
 
     function _propertyNumberToTokenId(uint256 _propertyVerificationNo) internal view returns (uint256) {
         return _propertyVerificationNumberToTokenId[_propertyVerificationNo];
+    }
+
+    /**
+     * @dev Private function to remove a token from this extension's ownership-tracking data structures. When an nft is burned
+     * @param _buyerWalletId address representing the previous owner of the given token ID
+     * @param _tokenId uint256 ID of the token to be removed from the tokens list of the given address
+     */
+    function _removeTokenFromOwnerEnumeration(address _buyerWalletId, uint256 _tokenId) private {
+        _holderTokens[_buyerWalletId].remove(_tokenId);
+        _tokenOwners.remove(_tokenId);
     }
 }

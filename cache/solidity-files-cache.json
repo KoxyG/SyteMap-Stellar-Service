@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/home/sunday/workspace/house-africa/ha-blockchain-application/contracts/SytemapAssetRegistry.sol": {
-      "lastModificationDate": 1679322908578,
-      "contentHash": "a950c09bd7fbf1e01cc5fcb105886b92",
+      "lastModificationDate": 1679326530138,
+      "contentHash": "9cdd41553f347ede31a5ed6f07740442",
       "sourceName": "contracts/SytemapAssetRegistry.sol",
       "solcConfig": {
         "version": "0.8.16",
