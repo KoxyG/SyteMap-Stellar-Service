@@ -1,23 +1,20 @@
 import { ethers, upgrades } from "hardhat";
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const unlockTime = currentTimestampInSeconds + 60;
-
   const URI: any = "sytemap-ipfs-dev-server.sytemap.com";
-
   const Sytemap = await ethers.getContractFactory("SytemapAssetRegistry");
-  // const sytemapNft = await Sytemap.deploy("hthhhhhhhhhhhhh");
-  const sytemapInstance = await upgrades.deployProxy(Sytemap, [URI], {
+  const sytemapInstanceProxy = await upgrades.deployProxy(Sytemap, [URI], {
     initializer: "initialize",
     kind: "uups",
   });
 
-  await sytemapInstance.deployed();
+  await sytemapInstanceProxy.deployed();
 
-  console.log(
-    `Contract deployed with Base Url ${URI}ETH and timestamp ${unlockTime} deployed to ${sytemapInstance.address}`,
-  );
+  const implementationV1Address = await upgrades.erc1967.getImplementationAddress(sytemapInstanceProxy.address);
+
+  console.log("proxy deployed to:", sytemapInstanceProxy.address);
+
+  console.log("ImplementationV1 contract address: " + implementationV1Address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

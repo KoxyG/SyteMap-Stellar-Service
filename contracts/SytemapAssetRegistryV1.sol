@@ -99,14 +99,6 @@ contract SytemapAssetRegistry is
 
     // ============ FUNCTION OVERRIDES ============
 
-    function pause() public onlyOwner {
-        _pause();
-    }
-
-    function unpause() public onlyOwner {
-        _unpause();
-    }
-
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     function _baseURI() internal view virtual override returns (string memory) {
@@ -128,41 +120,11 @@ contract SytemapAssetRegistry is
         return _tokenOwners.get(_tokenId, "ERC721: owner query for nonexistent token");
     }
 
-    /**
-     * @dev See {IERC721-balanceOf}.
-     */
-    function balanceOf(address _owner) public view override returns (uint256) {
-        require(_owner != address(0), "ERC721: balance query for the zero address");
-
-        return _holderTokens[_owner].length();
-    }
-
-    /**
-     * @dev See {IERC721Enumerable-tokenOfOwnerByIndex}.
-     */
-    function tokenOfOwnerByIndex(address _owner, uint256 index) public view returns (uint256) {
-        require(index < balanceOf(_owner), "ERC721Enumerable: owner index out of bounds");
-
-        return _holderTokens[_owner].at(index);
-    }
-
-    /**
-     * @dev See {IERC721Enumerable-totalSupply}.
-     */
-    function totalSupply() public view returns (uint256) {
-        return _tokenIdTracker.current();
-    }
-
     function tokenURI(
         uint256 _propertyVerificationNo
     ) public view override(ERC721Upgradeable, ERC721URIStorageUpgradeable) returns (string memory) {
         require(_exists(_propertyVerificationNo), "ERC721URIStorage: URI query for nonexistent token");
         return super.tokenURI(_propertyVerificationNo);
-    }
-
-    function tokenByIndex(uint256 index) public view returns (uint256) {
-        require(index < totalSupply(), "ERC721Enumerable: invalid index");
-        return index + 1;
     }
 
     /*********************** External methods *******************/
@@ -300,6 +262,44 @@ contract SytemapAssetRegistry is
             }
         }
         return allDetails;
+    }
+
+    function pause() public onlyOwner {
+        _pause();
+    }
+
+    function unpause() public onlyOwner {
+        _unpause();
+    }
+
+    function tokenByIndex(uint256 index) public view returns (uint256) {
+        require(index < totalSupply(), "ERC721Enumerable: invalid index");
+        return index + 1;
+    }
+
+    /**
+     * @dev See {IERC721Enumerable-totalSupply}.
+     */
+    function totalSupply() public view returns (uint256) {
+        return _tokenIdTracker.current();
+    }
+
+    /**
+     * @dev See {IERC721-balanceOf}.
+     */
+    function balanceOf(address _owner) public view override returns (uint256) {
+        require(_owner != address(0), "ERC721: balance query for the zero address");
+
+        return _holderTokens[_owner].length();
+    }
+
+    /**
+     * @dev See {IERC721Enumerable-tokenOfOwnerByIndex}.
+     */
+    function tokenOfOwnerByIndex(address _owner, uint256 index) public view returns (uint256) {
+        require(index < balanceOf(_owner), "ERC721Enumerable: owner index out of bounds");
+
+        return _holderTokens[_owner].at(index);
     }
 
     /*********************** Internal methods *******************/

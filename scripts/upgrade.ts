@@ -1,19 +1,23 @@
 /* eslint-disable no-process-exit */
 import { ethers, upgrades } from "hardhat";
 
-// const CONTRACT_ADDRESS: string = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0";
-const PROXY_ADDRESS = "0xD1a7c6f15ecC1ceD1219CDa8F556026ADB2063ad"; // Address of version 1
-// const VERSION1 = "0x35C9fC0433A007E85E1df9339916F703D2c7512F"; //Address of the version 1 implementation
+// This code uses the Hardhat framework and the ethers library to upgrade an existing
+// smart contract on the Ethereum blockchain.
+const PROXY_ADDRESS = "0x9fe46736679d2d9a65f0992f2272de9f3c7fa6e0"; // Address of version 1
 
 async function main() {
   // We get the contract to deploy
   const SytemapAssetRegistryUpgradeableV2 = await ethers.getContractFactory("SytemapAssetRegistry");
-  const contract = await upgrades.upgradeProxy(PROXY_ADDRESS, SytemapAssetRegistryUpgradeableV2, {
-    call: { fn: "reInitialize" },
-    kind: "uups",
-  });
+  const upgraded = await upgrades.upgradeProxy(
+    PROXY_ADDRESS,
+    SytemapAssetRegistryUpgradeableV2,
+    // call: { fn: "reInitialize" },
+    // kind: "uups",
+  );
+  const implementationV2Address = await upgrades.erc1967.getImplementationAddress(upgraded.address);
 
-  console.log("Contract Upgraded", contract);
+  console.log("ImplementationV2 contract address: " + implementationV2Address);
+  console.log("Contract Upgraded address", upgraded.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

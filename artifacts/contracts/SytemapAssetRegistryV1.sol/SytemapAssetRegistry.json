@@ -1,7 +1,7 @@
 {
   "_format": "hh-sol-artifact-1",
   "contractName": "SytemapAssetRegistry",
-  "sourceName": "contracts/SytemapAssetRegistry.sol",
+  "sourceName": "contracts/SytemapAssetRegistryV1.sol",
   "abi": [
     {
       "anonymous": false,
