@@ -50,9 +50,8 @@ contract SytemapAssetRegistry is
 
     /**
      * @notice The name of the token.
-     * @return Sytemap coin
      */
-    string public constant SYTEMAP_NAME = "Sytemap Coin";
+    string private constant SYTEMAP_NAME = "Sytemap Coin";
     /**
      * @notice The symbol of the token.
      * @return Stmsp

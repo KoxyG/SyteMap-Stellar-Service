@@ -4,6 +4,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 describe("Sytemap contract", function () {
   let owner: SignerWithAddress;
+  let addr1: SignerWithAddress;
   let sytemapInstance: any;
   let Sytemap;
   const URI = "sytemap-ipfs-dev-server.sytemap.com/";
@@ -23,7 +24,9 @@ describe("Sytemap contract", function () {
     propertyVerificationNo: 46,
   };
   beforeEach(async () => {
-    [owner] = await ethers.getSigners();
+    // [owner] = await ethers.getSigners();
+    [owner, addr1] = await ethers.getSigners();
+
     Sytemap = await ethers.getContractFactory("SytemapAssetRegistry");
     sytemapInstance = await upgrades.deployProxy(Sytemap, [URI], {
       initializer: "initialize",
@@ -45,6 +48,11 @@ describe("Sytemap contract", function () {
     });
   });
   describe("Minting", function () {
+    // it("Only Owner can mint NFTs", async function () {
+    //   await expect(
+    //     sytemapInstance.connect(addr1).safeMintNewPropertyInfo(addr1.address, "Test NFT 2"),
+    //   ).to.be.revertedWith("Ownable: caller is not the owner");
+    // });
     it("Should mint the property info", async function () {
       const txResponse = await sytemapInstance.safeMintNewPropertyInfo(
         propertyInfo.plotNo,
