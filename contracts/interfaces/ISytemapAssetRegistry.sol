@@ -57,6 +57,7 @@ interface ISytemapAssetRegistry {
     );
 
     event TokenMinted(uint256 indexed tokenId, uint256 indexed propertyVerificationNo, string tokenURL);
+    event BaseURIUpdated(string indexed oldValue, string indexed newValue);
 
     /**
      * @notice Emitted when a property price is changed by owner

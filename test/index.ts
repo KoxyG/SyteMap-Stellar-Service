@@ -1,13 +1,13 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 
 describe("Sytemap contract", function () {
   let owner: SignerWithAddress;
   let sytemapInstance: any;
   let Sytemap;
-  const URI = "ipfs://";
-  const tokenUrl = "QmdnfzqwRuTmZwquauTxGs9hXzMaaVczmuSuQbpUU4pRnu";
+  const URI = "sytemap-ipfs-dev-server.sytemap.com/";
+  const tokenUrl = "ipfs//QmdnfzqwRuTmZwquauTxGs9hXzMaaVczmuSuQbpUU4pRnu";
   const WALLET_ADDRESS = "0xbDA5747bFD65F08deb54cb465eB87D40e51B197E";
   const propertyInfo = {
     plotNo: 2,
@@ -25,8 +25,13 @@ describe("Sytemap contract", function () {
   beforeEach(async () => {
     [owner] = await ethers.getSigners();
     Sytemap = await ethers.getContractFactory("SytemapAssetRegistry");
-    sytemapInstance = await Sytemap.deploy(URI);
+    sytemapInstance = await upgrades.deployProxy(Sytemap, [URI], {
+      initializer: "initialize",
+      kind: "uups",
+    });
   });
+
+  console.log({ Sytemap, sytemapInstance });
 
   describe("Deployment", () => {
     const _name = "Sytemap Coin";
@@ -92,7 +97,7 @@ describe("Sytemap contract", function () {
         "0xbDA5747bFD65F08deb54cb465eB87D40e51B197E",
       );
       const tokenDetailsBypVN = await sytemapInstance.getPropertyInfoDetailsByPVN(46);
-      const newBaseUrl = await sytemapInstance.setBaseURI("http://localhost");
+      const newBaseUrl = await sytemapInstance.setBaseURI(URI);
       const tokenUrl = await sytemapInstance.tokenURI(46);
 
       console.log({ res, newBaseUrl, tokenUrl, ownerTokens, details, txResponspvn, txResponindex, tokenDetailsBypVN });

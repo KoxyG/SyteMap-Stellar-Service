@@ -3,14 +3,21 @@ pragma solidity >=0.6.0 <0.9.0;
 
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721BurnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableSetUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/structs/EnumerableMapUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
+
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 import "./interfaces/ISytemapAssetRegistry.sol";
 
@@ -23,15 +30,21 @@ import "./interfaces/ISytemapAssetRegistry.sol";
 
 contract SytemapAssetRegistry is
     ISytemapAssetRegistry,
-    ERC721,
-    Ownable,
-    ERC721URIStorage,
-    IERC721Enumerable,
-    ReentrancyGuard
+    Initializable,
+    ERC721Upgradeable,
+    ERC721URIStorageUpgradeable,
+    PausableUpgradeable,
+    OwnableUpgradeable,
+    ERC721BurnableUpgradeable,
+    UUPSUpgradeable,
+    ReentrancyGuardUpgradeable
 {
-    using EnumerableSet for EnumerableSet.UintSet;
-    using EnumerableMap for EnumerableMap.UintToAddressMap;
-    using Counters for Counters.Counter;
+    // using EnumerableSet for EnumerableSet.UintSet;
+    // using EnumerableMap for EnumerableMap.UintToAddressMap;
+    using CountersUpgradeable for CountersUpgradeable.Counter;
+
+    using EnumerableSetUpgradeable for EnumerableSetUpgradeable.UintSet;
+    using EnumerableMapUpgradeable for EnumerableMapUpgradeable.UintToAddressMap;
 
     /*************** State attributes ***************/
 
@@ -52,7 +65,7 @@ contract SytemapAssetRegistry is
      */
     string public constant SYTEMAP_SYMBOL = "STYE";
 
-    Counters.Counter private _tokenIdTracker;
+    CountersUpgradeable.Counter private _tokenIdTracker;
 
     /*********************** Mapping *******************/
 
@@ -63,10 +76,10 @@ contract SytemapAssetRegistry is
     mapping(uint256 => PropertyInffo) private _pvnToPropertInfo;
 
     // Mapping from holder address to their (enumerable) set of owned tokens
-    mapping(address => EnumerableSet.UintSet) private _holderTokens;
+    mapping(address => EnumerableSetUpgradeable.UintSet) private _holderTokens;
 
     // Enumerable mapping from token ids to their owners
-    EnumerableMap.UintToAddressMap private _tokenOwners;
+    EnumerableMapUpgradeable.UintToAddressMap private _tokenOwners;
 
     // Mapping  property verification number to token ID
     mapping(uint256 => uint256) private _propertyVerificationNumberToTokenId;
@@ -78,11 +91,30 @@ contract SytemapAssetRegistry is
      * name in our case is `Sytemap Coin` and symbol is `STYE`.
      * Constructor for Sytemap Coin takes in the baseURI to set _baseTokenURI for the collection.
      */
-    constructor(string memory baseURI) ERC721(SYTEMAP_NAME, SYTEMAP_SYMBOL) {
-        setBaseURI(baseURI);
+    function initialize(string memory _baseTokenURI) public initializer {
+        __ERC721_init(SYTEMAP_NAME, SYTEMAP_SYMBOL);
+        __ERC721URIStorage_init();
+        __Pausable_init();
+        __Ownable_init();
+        __ERC721URIStorage_init();
+        __ERC721Burnable_init();
+        __UUPSUpgradeable_init();
+        __ReentrancyGuard_init();
+
+        setBaseURI(_baseTokenURI);
     }
 
     // ============ FUNCTION OVERRIDES ============
+
+    function pause() public onlyOwner {
+        _pause();
+    }
+
+    function unpause() public onlyOwner {
+        _unpause();
+    }
+
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     function _baseURI() internal view virtual override returns (string memory) {
         return baseTokenURI;
@@ -91,50 +123,51 @@ contract SytemapAssetRegistry is
     /**
      * @dev This help us to change the base url even when the contract has been deployed.
      */
-    function setBaseURI(string memory _baseTokenURI) public onlyOwner {
-        baseTokenURI = _baseTokenURI;
+    function setBaseURI(string memory _newBaseURI) public onlyOwner {
+        emit BaseURIUpdated(baseTokenURI, _newBaseURI);
+        baseTokenURI = _newBaseURI;
     }
 
     /**
      * @dev See {IERC721-ownerOf}.
      */
-    function ownerOf(uint256 _tokenId) public view override(ERC721, IERC721) returns (address) {
+    function ownerOf(uint256 _tokenId) public view override returns (address) {
         return _tokenOwners.get(_tokenId, "ERC721: owner query for nonexistent token");
     }
 
     /**
      * @dev See {IERC721-balanceOf}.
      */
-    function balanceOf(address owner) public view override(ERC721, IERC721) returns (uint256) {
-        require(owner != address(0), "ERC721: balance query for the zero address");
+    function balanceOf(address _owner) public view override returns (uint256) {
+        require(_owner != address(0), "ERC721: balance query for the zero address");
 
-        return _holderTokens[owner].length();
+        return _holderTokens[_owner].length();
     }
 
     /**
      * @dev See {IERC721Enumerable-tokenOfOwnerByIndex}.
      */
-    function tokenOfOwnerByIndex(address owner, uint256 index) public view override returns (uint256) {
-        require(index < balanceOf(owner), "Index out of bounds");
-        return _holderTokens[owner].at(index);
+    function tokenOfOwnerByIndex(address _owner, uint256 index) public view returns (uint256) {
+        require(index < balanceOf(_owner), "ERC721Enumerable: owner index out of bounds");
+
+        return _holderTokens[_owner].at(index);
     }
 
     /**
      * @dev See {IERC721Enumerable-totalSupply}.
      */
-    function totalSupply() public view override returns (uint256) {
-        // _tokenOwners are indexed by tokenIDs, so .length() returns the number of tokenIDs
-        return _tokenOwners.length();
+    function totalSupply() public view returns (uint256) {
+        return _tokenIdTracker.current();
     }
 
     function tokenURI(
         uint256 _propertyVerificationNo
-    ) public view override(ERC721, ERC721URIStorage) returns (string memory) {
+    ) public view override(ERC721Upgradeable, ERC721URIStorageUpgradeable) returns (string memory) {
         require(_exists(_propertyVerificationNo), "ERC721URIStorage: URI query for nonexistent token");
         return super.tokenURI(_propertyVerificationNo);
     }
 
-    function tokenByIndex(uint256 index) public view override returns (uint256) {
+    function tokenByIndex(uint256 index) public view returns (uint256) {
         require(index < totalSupply(), "ERC721Enumerable: invalid index");
         return index + 1;
     }
@@ -167,7 +200,7 @@ contract SytemapAssetRegistry is
         address _buyerWalletId,
         string memory _estateCompanyName,
         uint256 _propertyVerificationNo
-    ) external onlyOwner nonReentrant { 
+    ) external onlyOwner nonReentrant {
         require(!_checkPvnExists(_propertyVerificationNo), "ERC721: pvn token already minted");
         require(_buyerWalletId != address(0), "ERC721: invalid address");
         require(_buyerWalletId != address(this), "ERC721: invalid address");
@@ -246,12 +279,12 @@ contract SytemapAssetRegistry is
         return _tokenOwner;
     }
 
-    function getAllPropertyDetailsByOwner(address owner) external view returns (PropertyInffo[] memory) {
-        uint256 tokenCount = balanceOf(owner);
+    function getAllPropertyDetailsByOwner(address _owner) external view returns (PropertyInffo[] memory) {
+        uint256 tokenCount = balanceOf(_owner);
         PropertyInffo[] memory propertyDetailsList = new PropertyInffo[](tokenCount);
 
         for (uint256 i = 0; i < tokenCount; ) {
-            uint256 tokenId = tokenOfOwnerByIndex(owner, i);
+            uint256 tokenId = tokenOfOwnerByIndex(_owner, i);
             propertyDetailsList[i] = _pvnToPropertInfo[tokenId];
 
             unchecked {
@@ -357,7 +390,9 @@ contract SytemapAssetRegistry is
         return _tokenOwners.contains(tokenID);
     }
 
-    function _burn(uint256 _propertyVerificationNo) internal virtual override(ERC721URIStorage, ERC721) {
+    function _burn(
+        uint256 _propertyVerificationNo
+    ) internal virtual override(ERC721Upgradeable, ERC721URIStorageUpgradeable) {
         // super._burn(tokenId);
         // uint256 tokenID = _propertyNumberToTokenId(_propertyVerificationNo);
         // delete _propertyVerificationNumberToTokenId[_propertyVerificationNo];

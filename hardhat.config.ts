@@ -1,6 +1,7 @@
 /* eslint-disable node/no-missing-import */
 import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
+import "@openzeppelin/hardhat-upgrades";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
 import "hardhat-watcher";
@@ -9,10 +10,10 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const NODE_URI_ = process.env.NODE_URI_ || "1".repeat(32);
-const PRIVATE_KEYS = process.env.PRIVATE_KEY || "1".repeat(64);
+// const NODE_URI_ = process.env.NODE_URI_ || "1".repeat(32);
+const PRIVATE_KEYS = "fa053525b7644c3f23fe57cc797530c696468724912abb7c096f4f1b8dbede30";
 
-// const url = "https://rpc.ankr.com/bsc_testnet_chapel";
+const url = "https://rpc.ankr.com/bsc_testnet_chapel";
 
 const chainIds = {
   goerli: 5,
@@ -44,7 +45,7 @@ const config: HardhatUserConfig | any = {
       gasPrice: 8000000000,
     },
     // goerli: getChainConfig("goerli"),
-    binance: { accounts: [PRIVATE_KEYS], url: NODE_URI_ },
+    binance: { accounts: [PRIVATE_KEYS], url: url },
     // matic: { accounts: [privatePolygonKey], url: polygonNodeUrl },
   },
   paths: {

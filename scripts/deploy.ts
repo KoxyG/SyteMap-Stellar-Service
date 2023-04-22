@@ -1,18 +1,22 @@
-import { ethers } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 
 async function main() {
   const currentTimestampInSeconds = Math.round(Date.now() / 1000);
   const unlockTime = currentTimestampInSeconds + 60;
 
-  const baseTokenURI = "ipfs://QmZbWNKJPAjxXuNFSEaksCJVd1M6DaKQViJBYPK2BdpDEP/";
+  const URI: any = "sytemap-ipfs-dev-server.sytemap.com";
 
   const Sytemap = await ethers.getContractFactory("SytemapAssetRegistry");
-  const sytemapNft = await Sytemap.deploy("hthhhhhhhhhhhhh");
+  // const sytemapNft = await Sytemap.deploy("hthhhhhhhhhhhhh");
+  const sytemapInstance = await upgrades.deployProxy(Sytemap, [URI], {
+    initializer: "initialize",
+    kind: "uups",
+  });
 
-  await sytemapNft.deployed();
+  await sytemapInstance.deployed();
 
   console.log(
-    `Contract deployed with Base Url ${baseTokenURI}ETH and timestamp ${unlockTime} deployed to ${sytemapNft.address}`,
+    `Contract deployed with Base Url ${URI}ETH and timestamp ${unlockTime} deployed to ${sytemapInstance.address}`,
   );
 }
 

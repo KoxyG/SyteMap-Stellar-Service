@@ -1,19 +1,12 @@
 /* eslint-disable no-process-exit */
-import { run, ethers, upgrades } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 
-const CONTRACT_ADDRESS: string = "Put the contract address here";
+const CONTRACT_ADDRESS: string = "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0";
 
 async function main() {
-  // Hardhat always runs the compile task when running scripts with its command
-  // line interface.
-  //
-  // If this script is run directly using `node` you may want to call compile
-  // manually to make sure everything is compiled
-  // await hre.run('compile');
-
   // We get the contract to deploy
-  const SytemapUpgradeableV2 = await ethers.getContractFactory("SytemapUpgradeableV2");
-  const contract = await upgrades.upgradeProxy(CONTRACT_ADDRESS, SytemapUpgradeableV2);
+  const SytemapAssetRegistryUpgradeableV2 = await ethers.getContractFactory("SytemapAssetRegistry");
+  const contract = await upgrades.upgradeProxy(CONTRACT_ADDRESS, SytemapAssetRegistryUpgradeableV2);
 
   console.log("Contract Upgraded", contract);
 }
