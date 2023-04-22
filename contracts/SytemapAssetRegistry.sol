@@ -36,10 +36,7 @@ contract SytemapAssetRegistry is
     UUPSUpgradeable,
     ReentrancyGuardUpgradeable
 {
-    // using EnumerableSet for EnumerableSet.UintSet;
-    // using EnumerableMap for EnumerableMap.UintToAddressMap;
     using CountersUpgradeable for CountersUpgradeable.Counter;
-
     using EnumerableSetUpgradeable for EnumerableSetUpgradeable.UintSet;
     using EnumerableMapUpgradeable for EnumerableMapUpgradeable.UintToAddressMap;
 
