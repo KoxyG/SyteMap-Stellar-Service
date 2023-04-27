@@ -8,18 +8,19 @@ pragma solidity >=0.6.0 <0.9.0;
  */
 interface ISytemapAssetRegistry {
     struct PropertyInffo {
-        uint256 plotNo;
         uint256 priceOfPlot;
-        uint256 sizeOfPlot;
-        uint256 coordinateOfPlot;
         uint256 propertyVerificationNo;
         uint256 timestamp;
         address buyerWalletId;
+        string plotNo;
+        string sizeOfPlot;
+        string coordinateOfPlot;
         string tokenURL;
         string estateName;
         string plotUrl;
         string dateOfAllocation;
         string estateCompanyName;
+        string nftAddress;
     }
 
     /*********************** Events *******************/
@@ -41,22 +42,22 @@ interface ISytemapAssetRegistry {
 
      */
     event NewPropertyInfoAdded(
-        uint256 plotNo,
-        string indexed tokenURL,
-        string estateName,
-        uint256 priceOfPlot,
-        uint256 sizeOfPlot,
-        string plotUrl,
-        string dateOfAllocation,
-        uint256 coordinateOfPlot,
-        address buyerWalletId,
-        string estateCompanyName,
+        string plotNo,
         uint256 propertyVerificationNo,
         uint256 tokenId,
-        uint256 timestamp
+        uint256 timestamp,
+        uint256 priceOfPlot,
+        address buyerWalletId,
+        string indexed tokenURL,
+        string estateName,
+        string sizeOfPlot,
+        string plotUrl,
+        string dateOfAllocation,
+        string coordinateOfPlot,
+        string estateCompanyName
     );
 
-    event TokenMinted(uint256 indexed tokenId, uint256 indexed propertyVerificationNo, string tokenURL);
+    // event TokenMinted(uint256 indexed tokenId, uint256 indexed propertyVerificationNo, string tokenURL);
     event BaseURIUpdated(string indexed oldValue, string indexed newValue);
 
     /**
@@ -69,18 +70,20 @@ interface ISytemapAssetRegistry {
     /*********************** Interface Methods  *******************/
 
     function safeMintNewPropertyInfo(
-        uint256 plotNo,
+        string memory plotNo,
         string memory tokenURL,
         string memory estateName,
         uint256 priceOfPlot,
-        uint256 sizeOfPlot,
+        string memory sizeOfPlot,
         string memory plotUrl,
         string memory dateOfAllocation,
-        uint256 coordinateOfPlot,
+        string memory coordinateOfPlot,
         address buyerWalletId,
         string memory estateCompanyName,
-        uint256 propertyVerificationNo
+        uint256 propertyVerificationNo,
+        string calldata nftAddress
     ) external;
+
 
     function changePropertyPriceByOwner(uint256 _propId, uint256 _newPrice) external returns (bool);
 

@@ -10,10 +10,8 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-// const NODE_URI_ = process.env.NODE_URI_ || "1".repeat(32);
-const PRIVATE_KEYS = "fa053525b7644c3f23fe57cc797530c696468724912abb7c096f4f1b8dbede30";
-
-const url = "https://rpc.ankr.com/bsc_testnet_chapel";
+const NODE_URI_ = process.env.NODE_URI_ || "1".repeat(32);
+const PRIVATE_KEYS = process.env.PRIVATE_KEYS || "1".repeat(32);
 
 const chainIds = {
   goerli: 5,
@@ -45,7 +43,7 @@ const config: HardhatUserConfig | any = {
       gasPrice: 8000000000,
     },
     // goerli: getChainConfig("goerli"),
-    binance: { accounts: [PRIVATE_KEYS], url: url },
+    binance: { accounts: [PRIVATE_KEYS], url: NODE_URI_ },
     // matic: { accounts: [privatePolygonKey], url: polygonNodeUrl },
   },
   paths: {
@@ -53,6 +51,9 @@ const config: HardhatUserConfig | any = {
     cache: "./cache",
     sources: "./contracts",
     tests: "./test",
+  },
+  tracer: {
+    enableAllOpcodes: true,
   },
   solidity: {
     version: "0.8.16",
@@ -68,6 +69,7 @@ const config: HardhatUserConfig | any = {
         enabled: true,
         runs: 800,
       },
+      viaIR: true,
     },
   },
   typechain: {

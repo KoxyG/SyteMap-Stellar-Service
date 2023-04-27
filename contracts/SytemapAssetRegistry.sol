@@ -77,6 +77,9 @@ contract SytemapAssetRegistry is
     // Mapping  property verification number to token ID
     mapping(uint256 => uint256) private _propertyVerificationNumberToTokenId;
 
+ // Mapping  nftAddress number to token ID
+    mapping(string => uint256) private _nftAddressToTokenId;
+
     /*********************** Constructor *******************/
 
     /**
@@ -144,17 +147,18 @@ contract SytemapAssetRegistry is
      * @param _propertyVerificationNo The property verification No for any asset
      */
     function safeMintNewPropertyInfo(
-        uint256 _plotNo,
+        string memory _plotNo,
         string memory _tokenURL,
         string memory _estateName,
         uint256 _priceOfPlot,
-        uint256 _sizeOfPlot,
+        string memory _sizeOfPlot,
         string memory _plotUrl,
         string memory _dateOfAllocation,
-        uint256 _coordinateOfPlot,
+        string memory _coordinateOfPlot,
         address _buyerWalletId,
         string memory _estateCompanyName,
-        uint256 _propertyVerificationNo
+        uint256 _propertyVerificationNo,
+        string memory _nftAddress
     ) external onlyOwner nonReentrant {
         require(!_checkPvnExists(_propertyVerificationNo), "ERC721: pvn token already minted");
         require(_buyerWalletId != address(0), "ERC721: invalid address");
@@ -169,7 +173,7 @@ contract SytemapAssetRegistry is
         _addPropertyTokenToOwnerEnumeration(_buyerWalletId, tokenId);
         _addPropertyTokenToHolderEnumeration(_buyerWalletId, tokenId);
         _mapPropertyVerificationNumberToTokenId(tokenId, _propertyVerificationNo); // generate token id from counter
-
+        _mapNftAddressToTokenId(tokenId, _nftAddress); // generate token id from
         // Set the land property details for the token
         _saveMetadataOfPropertyNFT(
             _plotNo,
@@ -183,9 +187,9 @@ contract SytemapAssetRegistry is
             _buyerWalletId,
             _estateCompanyName,
             _propertyVerificationNo,
+            _nftAddress,
             tokenId
         );
-        emit TokenMinted(tokenId, _propertyVerificationNo, _tokenURL);
     }
 
     /// @dev Function to change property value
@@ -214,6 +218,10 @@ contract SytemapAssetRegistry is
         return _pvnToPropertInfo[tokenId];
     }
 
+function getPropertyInfoDetailsByNftAddress(string memory _nftAddress) external view returns (PropertyInffo memory) {
+        uint256 tokenId = _nftUniqueAddressToTokenId(_nftAddress);
+        return _pvnToPropertInfo[tokenId];
+    }
     // get total number of oroperty tokens owned by an address
     function getTotalNumberOfPropertyOwnedByAnAddress(address _owner) external view returns (uint256) {
         require(msg.sender != address(0));
@@ -319,17 +327,18 @@ contract SytemapAssetRegistry is
      * @param _propertyVerificationNo The property verification No for any asset
      */
     function _saveMetadataOfPropertyNFT(
-        uint256 _plotNo,
+        string memory _plotNo,
         string memory _tokenURL,
         string memory _estateName,
         uint256 _priceOfPlot,
-        uint256 _sizeOfPlot,
+        string memory _sizeOfPlot,
         string memory _plotUrl,
         string memory _dateOfAllocation,
-        uint256 _coordinateOfPlot,
+        string memory _coordinateOfPlot,
         address _buyerWalletId,
         string memory _estateCompanyName,
         uint256 _propertyVerificationNo,
+        string memory _nftAddress,
         uint256 _tokenId
     ) internal {
         require(_priceOfPlot > 0, "Price must be at least 1 wei");
@@ -350,24 +359,25 @@ contract SytemapAssetRegistry is
             buyerWalletId: _buyerWalletId,
             estateCompanyName: _estateCompanyName,
             propertyVerificationNo: _propertyVerificationNo,
+            nftAddress: _nftAddress,
             timestamp: block.timestamp
         });
         _pvnToPropertInfo[_tokenId] = propertyInffo;
 
         emit NewPropertyInfoAdded(
             _plotNo,
+            _propertyVerificationNo,
+            _tokenId,
+            block.timestamp,
+            _priceOfPlot,
+            _buyerWalletId,
             _tokenURL,
             _estateName,
-            _priceOfPlot,
             _sizeOfPlot,
             _plotUrl,
             _dateOfAllocation,
             _coordinateOfPlot,
-            _buyerWalletId,
-            _estateCompanyName,
-            _propertyVerificationNo,
-            _tokenId,
-            block.timestamp
+            _estateCompanyName
         );
     }
 
@@ -419,8 +429,15 @@ contract SytemapAssetRegistry is
         _propertyVerificationNumberToTokenId[_propertyVerificationNo] = _tokenId;
     }
 
+function _mapNftAddressToTokenId(uint256 _tokenId, string memory _nftAddress) private {
+        _nftAddressToTokenId[_nftAddress] = _tokenId;
+    }
+
     function _propertyNumberToTokenId(uint256 _propertyVerificationNo) internal view returns (uint256) {
         return _propertyVerificationNumberToTokenId[_propertyVerificationNo];
+    }
+    function _nftUniqueAddressToTokenId(string memory _nftAddress) internal view returns (uint256) {
+        return _nftAddressToTokenId[_nftAddress];
     }
 
     /**

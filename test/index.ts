@@ -11,17 +11,18 @@ describe("Sytemap contract", function () {
   const tokenUrl = "ipfs//QmdnfzqwRuTmZwquauTxGs9hXzMaaVczmuSuQbpUU4pRnu";
   const WALLET_ADDRESS = "0xbDA5747bFD65F08deb54cb465eB87D40e51B197E";
   const propertyInfo = {
-    plotNo: 2,
-    tokenURL: tokenUrl,
+    plotNo: "Plot B3 julia bingma",
+    tokenURL: "ipfs://QmdnfzqwRuTmZwquauTxGs9hXzMaaVczmuSuQbpUU4pRnu",
     estateName: "Lagos",
-    priceOfPlot: 3,
-    sizeOfPlot: 5,
-    plotUrl: "gggg",
-    dateOfAllocation: "gggg",
-    coordinateOfPlot: 5,
-    buyerWalletId: WALLET_ADDRESS,
-    estateCompanyName: "ffff",
+    priceOfPlot: 3000000000.0,
+    sizeOfPlot: "50SQM",
+    plotUrl: "https://developer.sytemap.com/map/property-map",
+    dateOfAllocation: "2023-03-21",
+    coordinateOfPlot: "this is so many of the json file added to the contract",
+    buyerWalletId: "0xbDA5747bFD65F08deb54cb465eB87D40e51B197E",
+    estateCompanyName: "Lagos estate",
     propertyVerificationNo: 46,
+    nftAddress: "0xdddddfsgerrh",
   };
   beforeEach(async () => {
     // [owner] = await ethers.getSigners();
@@ -48,11 +49,6 @@ describe("Sytemap contract", function () {
     });
   });
   describe("Minting", function () {
-    // it("Only Owner can mint NFTs", async function () {
-    //   await expect(
-    //     sytemapInstance.connect(addr1).safeMintNewPropertyInfo(addr1.address, "Test NFT 2"),
-    //   ).to.be.revertedWith("Ownable: caller is not the owner");
-    // });
     it("Should mint the property info", async function () {
       const txResponse = await sytemapInstance.safeMintNewPropertyInfo(
         propertyInfo.plotNo,
@@ -66,49 +62,39 @@ describe("Sytemap contract", function () {
         propertyInfo.buyerWalletId,
         propertyInfo.estateCompanyName,
         propertyInfo.propertyVerificationNo,
+        propertyInfo.nftAddress,
       );
       const txReceipt = await txResponse.wait();
       const event = txReceipt.events.find((event: any) => event.event === "NewPropertyInfoAdded");
       const [
         plotNo,
+        propertyVerificationNo,
+        timestamp,
+        priceOfPlot,
+        buyerWalletId,
         tokenURL,
         estateName,
-        priceOfPlot,
         sizeOfPlot,
         plotUrl,
         dateOfAllocation,
         coordinateOfPlot,
-        buyerWalletId,
         estateCompanyName,
-        propertyVerificationNo,
-        timestamp,
       ] = event.args;
       const res = {
-        plotNo: plotNo.toNumber(),
+        plotNo: plotNo,
         tokenURL: tokenURL,
         estateName: estateName,
-        priceOfPlot: priceOfPlot.toNumber(),
-        sizeOfPlot: sizeOfPlot.toNumber(),
+        priceOfPlot: priceOfPlot,
+        sizeOfPlot: sizeOfPlot,
         plotUrl: plotUrl,
         dateOfAllocation: dateOfAllocation,
-        coordinateOfPlot: coordinateOfPlot.toNumber(),
+        coordinateOfPlot: coordinateOfPlot,
         buyerWalletId: buyerWalletId,
         estateCompanyName: estateCompanyName,
-        propertyVerificationNo: propertyVerificationNo.toNumber(),
-        timestamp: timestamp.toNumber(),
+        propertyVerificationNo: propertyVerificationNo,
+        timestamp: timestamp,
       };
 
-      const txResponspvn = await sytemapInstance.getPropertyVerificationNoOwner(46);
-      const txResponindex = await sytemapInstance.tokenByIndex(0);
-      const details = await sytemapInstance.getNumberOfPropertyTokensMinted();
-      const ownerTokens = await sytemapInstance.getTotalNumberOfPropertyOwnedByAnAddress(
-        "0xbDA5747bFD65F08deb54cb465eB87D40e51B197E",
-      );
-      const tokenDetailsBypVN = await sytemapInstance.getPropertyInfoDetailsByPVN(46);
-      const newBaseUrl = await sytemapInstance.setBaseURI(URI);
-      const tokenUrl = await sytemapInstance.tokenURI(46);
-
-      console.log({ res, newBaseUrl, tokenUrl, ownerTokens, details, txResponspvn, txResponindex, tokenDetailsBypVN });
       expect(res.propertyVerificationNo).to.equal(propertyInfo.propertyVerificationNo);
     });
     //   it("Should check NewPropertyInfoAdded event is emitted ", async () => {
