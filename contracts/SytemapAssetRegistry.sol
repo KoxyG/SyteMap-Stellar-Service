@@ -77,7 +77,7 @@ contract SytemapAssetRegistry is
     // Mapping  property verification number to token ID
     mapping(uint256 => uint256) private _propertyVerificationNumberToTokenId;
 
- // Mapping  nftAddress number to token ID
+    // Mapping  nftAddress number to token ID
     mapping(string => uint256) private _nftAddressToTokenId;
 
     /*********************** Constructor *******************/
@@ -218,10 +218,13 @@ contract SytemapAssetRegistry is
         return _pvnToPropertInfo[tokenId];
     }
 
-function getPropertyInfoDetailsByNftAddress(string memory _nftAddress) external view returns (PropertyInffo memory) {
+    function getPropertyInfoDetailsByNftAddress(
+        string memory _nftAddress
+    ) external view returns (PropertyInffo memory) {
         uint256 tokenId = _nftUniqueAddressToTokenId(_nftAddress);
         return _pvnToPropertInfo[tokenId];
     }
+
     // get total number of oroperty tokens owned by an address
     function getTotalNumberOfPropertyOwnedByAnAddress(address _owner) external view returns (uint256) {
         require(msg.sender != address(0));
@@ -347,22 +350,24 @@ function getPropertyInfoDetailsByNftAddress(string memory _nftAddress) external 
 
         // check if the token URI already exists or not
         //    require(!tokenURIExists[_tokenURL], "Token url already e");
-        PropertyInffo memory propertyInffo = PropertyInffo({
-            plotNo: _plotNo,
-            tokenURL: _tokenURL,
-            estateName: _estateName,
-            priceOfPlot: _priceOfPlot,
-            sizeOfPlot: _sizeOfPlot,
-            plotUrl: _plotUrl,
-            dateOfAllocation: _dateOfAllocation,
-            coordinateOfPlot: _coordinateOfPlot,
-            buyerWalletId: _buyerWalletId,
-            estateCompanyName: _estateCompanyName,
-            propertyVerificationNo: _propertyVerificationNo,
-            nftAddress: _nftAddress,
-            timestamp: block.timestamp
-        });
-        _pvnToPropertInfo[_tokenId] = propertyInffo;
+        {
+            PropertyInffo memory propertyInffo = PropertyInffo({
+                plotNo: _plotNo,
+                tokenURL: _tokenURL,
+                estateName: _estateName,
+                priceOfPlot: _priceOfPlot,
+                sizeOfPlot: _sizeOfPlot,
+                plotUrl: _plotUrl,
+                dateOfAllocation: _dateOfAllocation,
+                coordinateOfPlot: _coordinateOfPlot,
+                buyerWalletId: _buyerWalletId,
+                estateCompanyName: _estateCompanyName,
+                propertyVerificationNo: _propertyVerificationNo,
+                nftAddress: _nftAddress,
+                timestamp: block.timestamp
+            });
+            _pvnToPropertInfo[_tokenId] = propertyInffo;
+        }
 
         emit NewPropertyInfoAdded(
             _plotNo,
@@ -429,13 +434,14 @@ function getPropertyInfoDetailsByNftAddress(string memory _nftAddress) external 
         _propertyVerificationNumberToTokenId[_propertyVerificationNo] = _tokenId;
     }
 
-function _mapNftAddressToTokenId(uint256 _tokenId, string memory _nftAddress) private {
+    function _mapNftAddressToTokenId(uint256 _tokenId, string memory _nftAddress) private {
         _nftAddressToTokenId[_nftAddress] = _tokenId;
     }
 
     function _propertyNumberToTokenId(uint256 _propertyVerificationNo) internal view returns (uint256) {
         return _propertyVerificationNumberToTokenId[_propertyVerificationNo];
     }
+
     function _nftUniqueAddressToTokenId(string memory _nftAddress) internal view returns (uint256) {
         return _nftAddressToTokenId[_nftAddress];
     }

@@ -27,6 +27,8 @@
     "deploy": "hardhat run --network localhost scripts/deploy.ts",
     "deploy-goerli": "hardhat run --network matic scripts/deploy.ts",
     "deploy-binance": "hardhat run --network binance scripts/deploy.ts",
+    "deploy-testnet":"npx hardhat run --network testnet scripts/redeploy.ts",
+    "deploy-mainnet":"npx hardhat run --network main scripts/redeploy.ts",
     "accounts": "hardhat accounts",
     "runlocal": "hardhat run --network localhost scripts/deploy.ts",
     "upgradelocal": "hardhat run --network localhost scripts/upgrade.ts",
