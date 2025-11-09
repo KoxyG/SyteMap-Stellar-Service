@@ -1,377 +1,128 @@
-# Sytemap Property Registry
+<img src="./public/images/repo-banner.png" alt="repo-banner" />
 
-## Contracts
+# Node.js and TypeScript Backend 
 
-```ml
-auth
-├─ Owned — "Simple single owner authorization"
-tokens
-├─ ERC721 — "Modern, minimalist, and gas efficient ERC721 implementation"
-├─ ERC1155 — "Minimalist and gas efficient standard ERC1155 implementation"
-utils
-├─ ReentrancyGuard — "Gas optimized reentrancy protection for smart contracts"
+Welcome to the Node.js and TypeScript Backend ! This repository provides a robust foundation for building scalable and maintainable backend applications using Node.js and TypeScript. Perfect for developers looking to kickstart new projects without the repetitive setup tasks.
+
+## 🚀 Features
+
+This Backend Service comes pre-configured with the following tools:
+
+- [x] **ESLint**: Enforces consistent coding standards with rules configured in `.eslintrc.mjs`.
+- [x] **Prettier**: Automatically formats code according to rules specified in `.prettierrc`.
+- [x] **Husky**: Ensures code quality by running linting and scripts before commits.
+- [x] **Lint-Staged**: Runs linting checks only on staged files during the commit process.
+- [x] **Swagger**: Provides interactive API documentation accessible at `/api/v1/default/api-docs`.
+- [x] **Jest with SuperTest**: Facilitates comprehensive API testing with Jest and SuperTest integration.
+- [x] **Helmet**: Adds security headers to enhance protection against web vulnerabilities.
+- [x] **Global Error Handling**: Centralizes error management to handle exceptions consistently across the application.
+- [x] **Cluster**: Utilizes multiple Node.js instances to distribute workload and minimize downtime.
+- [x] **Winston**: Offers robust logging for errors, warnings, and informational messages across the application.
+
+## ✅ TODOs
+
+- [ ] Set up body parser to limit the request body size
+- [ ] Do not return stack trace details to users instead return generic messages to user
+- [ ] Set up rete-limiting to fix the number of request a user can make, to prevent ddos attack
+- [ ] Set up https, Ensure all data is encrypted by using HTTPS. Obtain and configure SSL/TLS certificates.
+
+## 📦 Getting Started
+
+To get started with this backend service, follow these simple steps:
+
+**1. Clone the Repository**
+
+```bash
+# if you want to change the name of repo as you clone, use below command
+git clone https://github.com/houseafrica/sytemap-stellar-blockchain-v2 {your-directory-name-here}
+cd {your-directory-name}
 ```
 
-# Coverage Report
+**2. Install Dependencies**
 
-| Statements                                                                               | Functions                                                                              | Lines                                                                          |
-| ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| ![Statements](https://img.shields.io/badge/statements-100%25-brightgreen.svg?style=flat) | ![Functions](https://img.shields.io/badge/functions-100%25-brightgreen.svg?style=flat) | ![Lines](https://img.shields.io/badge/lines-100%25-brightgreen.svg?style=flat) |
-
-# Prerequisites
-
-- Docker
-
-```shell
-PATH+=":./bin"    # use your sh files (which are located in bin/) directly from the root of the project
+```bash
+yarn install # recommended
+npm install
 ```
 
-```shell
-yarn install      # install deps
-yarn run build    # install solc and other tools in the docker image
+**3. Set Up Environment Variables**
+Copy the .env.example file to .env and configure your environment variables.
+
+**4. Run the Project**
+Start the development server with:
+
+```bash
+yarn run dev # recommended
+npm run dev
 ```
 
-Don't forget to copy the .env.example file to a file named .env, and then edit it to fill in the details.
+**5. Build the Project**
+To create a production build, use:
 
-# Running all the tests
-
-```shell
-yarn run test
-yarn run test:trace       # shows logs + calls
-yarn run test:fresh       # force compile and then run tests
-yarn run test:coverage    # run tests with coverage reports
+```bash
+yarn run build # recommended
+npm run build
 ```
 
-# Formatters & Linters
+**6. Run Tests**
+Execute tests using:
 
-You can use the below packages,
+```bash
+# run test for once
+yarn run test # recommended
+npm run test
 
-- Solhint
-- ESLint
-- Prettier
-- CSpell
-- ShellCheck
-
-```shell
-yarn run format
-yarn run lint
+# watch test files and re-run test whenever file changes
+yarn run test:watch
+npm run test:watch
 ```
 
-# Analyzers
+## ⚙️ Test Server by Hitting Welcome API
 
-You can use the below tools,
-
-- Slither
-- Mythril
-
-```shell
-yarn run analyze:static path/to/contract
-yarn run analyze:security path/to/contract
-yarn run analyze:all path/to/contract
+```bash
+http://localhost:8000/api/v1/default/welcome
 ```
 
-# Deploy Contract & Verification
+## 📊 Benchmark the Server
 
-To try out Etherscan verification, you first need to deploy a contract to an Ethereum network that's supported by Etherscan, such as Ropsten.
-
-In this project, copy the .env.example file to a file named .env, and then edit it to fill in the details.
-
-- Enter your Etherscan API key
-- Ropsten node URL (eg from Alchemy)
-- The private key of the account which will send the deployment transaction.
-
-With a valid .env file in place, first deploy your contract:
-
-```shell
-yarn run deploy ropsten <CONTRACT_FILE_NAME>    # related to scripts/deploy/<CONTRACT_FILE_NAME>.ts
-yarn run deploy:all ropsten                     # related to scripts/deploy.ts
+```bash
+http://localhost:8000/api/v1/default/benchmark
 ```
 
-Also, you can add contract(s) manually to your tenderly projects from the output.
-`https://dashboard.tenderly.co/contract/<NETWORK_NAME>/<CONTRACT_ADDRESS>`
+## 📚 Documentation
 
-And then verify it:
+API documentation is available through Swagger UI. Access it by navigating to `http:localhost:8000/api/v1/default/api-docs` in your running application.
 
-```shell
-yarn run verify ropsten <DEPLOYED_CONTRACT_ADDRESS> "<CONSTRUCTOR_ARGUMENT(S)>"    # hardhat.config.ts to see all networks
-```
+## 🤝 Contributing
 
-# Finder
+We welcome contributions to improve this backend service. Please follow these steps:
 
-```shell
-yarn run finder --path contracts/Workshop.sol --name Workshop abi --colorify --compact --prettify    # find contract outputs of specific contract
-```
+Fork the repository.
+Create a new branch (git checkout -b 'feature/your-feature'/'your-configuration').
+Commit your changes (git commit -am 'Add new feature'/'add new configuration').
+Push to the branch (git push origin 'feature/your-feature'/'your-configuration').
+Create a new Pull Request.
 
-```shell
-yarn run finder --help    # see all supported outputs (abi, metadata, bytecode and more than 20+ outputs)
-```
+## 🚨 Issues and Support
 
-# Miscellaneous
+If you encounter any issues or have questions, please open an issue on the GitHub repository.
 
-```shell
-yarn run generate:docs    # generate docs according to the contracts/ folder
-```
+## 📄 License
 
-```shell
-yarn run generate:flatten ./path/to/contract     # generate the flatten file (path must be "./" prefixed)
-yarn run generate:abi ./path/to/contract         # generate the ABI file (path must be "./" prefixed)
-yarn run generate:bin ./path/to/contract         # generate the binary in a hex (path must be "./" prefixed)
-yarn run generate:metadata ./path/to/contract    # generate the metadata (path must be "./" prefixed)
-yarn run generate:all-abi
-yarn run generate:all-bin
-yarn run generate:all-metadata
-```
+This project is licensed under the MIT [License](./License). See the LICENSE file for details.
 
-```shell
-yarn run share    # share project folder with remix ide
-```
+### 🔗 Links
 
-# REPORT 
+- [NodeJS](https://nodejs.org/en/learn/getting-started/introduction-to-nodejs)
+- [TypeScript](https://www.typescriptlang.org/docs/handbook/intro.html) - Using [ts-node](https://www.npmjs.com/package/ts-node) and [typescript](https://www.npmjs.com/package/typescript)
+- [ESLint](https://eslint.org/docs/latest/use/getting-started)
+- [Prettier](https://prettier.io/docs/en/install.html)
+- [Husky](https://typicode.github.io/husky/get-started.html)
+- [Lint-Staged](https://www.npmjs.com/package/lint-staged)
+- [Swagger](https://swagger.io/docs/specification/basic-structure/) - Using [swagger-autogen](https://swagger-autogen.github.io/docs/getting-started/quick-start/) and [swagger-ui-express](https://www.npmjs.com/package/swagger-ui-express)
+- [Express](https://expressjs.com/en/starter/installing.html)
+- [Jest](https://jestjs.io/docs/getting-started)
 
- Sūrya's Description Report
+## 🏷️ Tags
 
- Contracts Description Table
-
-
-|  Contract  |         Type        |       Bases      |                  |                 |
-|:----------:|:-------------------:|:----------------:|:----------------:|:---------------:|
-|     └      |  **Function Name**  |  **Visibility**  |  **Mutability**  |  **Modifiers**  |
-||||||
-| **SytemapAssetRegistry** | Implementation | ISytemapAssetRegistry, ERC721, Ownable, ERC721URIStorage, IERC721Enumerable, ReentrancyGuard |||
-| └ | <Constructor> | Public ❗️ | 🛑  | ERC721 |
-| └ | _baseURI | Internal 🔒 |   | |
-| └ | setBaseURI | Public ❗️ | 🛑  | onlyOwner |
-| └ | ownerOf | Public ❗️ |   |NO❗️ |
-| └ | balanceOf | Public ❗️ |   |NO❗️ |
-| └ | tokenOfOwnerByIndex | Public ❗️ |   |NO❗️ |
-| └ | totalSupply | Public ❗️ |   |NO❗️ |
-| └ | tokenURI | Public ❗️ |   |NO❗️ |
-| └ | tokenByIndex | Public ❗️ |   |NO❗️ |
-| └ | safeMintNewPropertyInfo | External ❗️ | 🛑  | onlyOwner nonReentrant |
-| └ | changePropertyPriceByOwner | External ❗️ | 🛑  | onlyOwner |
-| └ | getPropertyInfoDetailsByPVN | External ❗️ |   |NO❗️ |
-| └ | getTotalNumberOfPropertyOwnedByAnAddress | External ❗️ |   |NO❗️ |
-| └ | getNumberOfPropertyTokensMinted | External ❗️ |   |NO❗️ |
-| └ | getPropertyVerificationNoOwner | External ❗️ |   |NO❗️ |
-| └ | getAllPropertyDetailsByOwner | External ❗️ |   |NO❗️ |
-| └ | getAllMintedPropertyDetails | External ❗️ |   |NO❗️ |
-| └ | _saveMetadataOfPropertyNFT | Internal 🔒 | 🛑  | |
-| └ | _checkPvnExists | Internal 🔒 |   | |
-| └ | _burn | Internal 🔒 | 🛑  | |
-| └ | _addPropertyTokenToOwnerEnumeration | Private 🔐 | 🛑  | |
-| └ | _addPropertyTokenToHolderEnumeration | Private 🔐 | 🛑  | |
-| └ | _mapPropertyVerificationNumberToTokenId | Private 🔐 | 🛑  | |
-| └ | _propertyNumberToTokenId | Internal 🔒 |   | |
-| └ | _removeTokenFromOwnerEnumeration | Private 🔐 | 🛑  | |
-||||||
-| **ERC721** | Implementation | Context, ERC165, IERC721, IERC721Metadata |||
-| └ | <Constructor> | Public ❗️ | 🛑  |NO❗️ |
-| └ | supportsInterface | Public ❗️ |   |NO❗️ |
-| └ | balanceOf | Public ❗️ |   |NO❗️ |
-| └ | ownerOf | Public ❗️ |   |NO❗️ |
-| └ | name | Public ❗️ |   |NO❗️ |
-| └ | symbol | Public ❗️ |   |NO❗️ |
-| └ | tokenURI | Public ❗️ |   |NO❗️ |
-| └ | _baseURI | Internal 🔒 |   | |
-| └ | approve | Public ❗️ | 🛑  |NO❗️ |
-| └ | getApproved | Public ❗️ |   |NO❗️ |
-| └ | setApprovalForAll | Public ❗️ | 🛑  |NO❗️ |
-| └ | isApprovedForAll | Public ❗️ |   |NO❗️ |
-| └ | transferFrom | Public ❗️ | 🛑  |NO❗️ |
-| └ | safeTransferFrom | Public ❗️ | 🛑  |NO❗️ |
-| └ | safeTransferFrom | Public ❗️ | 🛑  |NO❗️ |
-| └ | _safeTransfer | Internal 🔒 | 🛑  | |
-| └ | _ownerOf | Internal 🔒 |   | |
-| └ | _exists | Internal 🔒 |   | |
-| └ | _isApprovedOrOwner | Internal 🔒 |   | |
-| └ | _safeMint | Internal 🔒 | 🛑  | |
-| └ | _safeMint | Internal 🔒 | 🛑  | |
-| └ | _mint | Internal 🔒 | 🛑  | |
-| └ | _burn | Internal 🔒 | 🛑  | |
-| └ | _transfer | Internal 🔒 | 🛑  | |
-| └ | _approve | Internal 🔒 | 🛑  | |
-| └ | _setApprovalForAll | Internal 🔒 | 🛑  | |
-| └ | _requireMinted | Internal 🔒 |   | |
-| └ | _checkOnERC721Received | Private 🔐 | 🛑  | |
-| └ | _beforeTokenTransfer | Internal 🔒 | 🛑  | |
-| └ | _afterTokenTransfer | Internal 🔒 | 🛑  | |
-| └ | __unsafe_increaseBalance | Internal 🔒 | 🛑  | |
-||||||
-| **IERC721** | Interface | IERC165 |||
-| └ | balanceOf | External ❗️ |   |NO❗️ |
-| └ | ownerOf | External ❗️ |   |NO❗️ |
-| └ | safeTransferFrom | External ❗️ | 🛑  |NO❗️ |
-| └ | safeTransferFrom | External ❗️ | 🛑  |NO❗️ |
-| └ | transferFrom | External ❗️ | 🛑  |NO❗️ |
-| └ | approve | External ❗️ | 🛑  |NO❗️ |
-| └ | setApprovalForAll | External ❗️ | 🛑  |NO❗️ |
-| └ | getApproved | External ❗️ |   |NO❗️ |
-| └ | isApprovedForAll | External ❗️ |   |NO❗️ |
-||||||
-| **IERC165** | Interface |  |||
-| └ | supportsInterface | External ❗️ |   |NO❗️ |
-||||||
-| **IERC721Receiver** | Interface |  |||
-| └ | onERC721Received | External ❗️ | 🛑  |NO❗️ |
-||||||
-| **IERC721Metadata** | Interface | IERC721 |||
-| └ | name | External ❗️ |   |NO❗️ |
-| └ | symbol | External ❗️ |   |NO❗️ |
-| └ | tokenURI | External ❗️ |   |NO❗️ |
-||||||
-| **Address** | Library |  |||
-| └ | isContract | Internal 🔒 |   | |
-| └ | sendValue | Internal 🔒 | 🛑  | |
-| └ | functionCall | Internal 🔒 | 🛑  | |
-| └ | functionCall | Internal 🔒 | 🛑  | |
-| └ | functionCallWithValue | Internal 🔒 | 🛑  | |
-| └ | functionCallWithValue | Internal 🔒 | 🛑  | |
-| └ | functionStaticCall | Internal 🔒 |   | |
-| └ | functionStaticCall | Internal 🔒 |   | |
-| └ | functionDelegateCall | Internal 🔒 | 🛑  | |
-| └ | functionDelegateCall | Internal 🔒 | 🛑  | |
-| └ | verifyCallResultFromTarget | Internal 🔒 |   | |
-| └ | verifyCallResult | Internal 🔒 |   | |
-| └ | _revert | Private 🔐 |   | |
-||||||
-| **Context** | Implementation |  |||
-| └ | _msgSender | Internal 🔒 |   | |
-| └ | _msgData | Internal 🔒 |   | |
-||||||
-| **Strings** | Library |  |||
-| └ | toString | Internal 🔒 |   | |
-| └ | toHexString | Internal 🔒 |   | |
-| └ | toHexString | Internal 🔒 |   | |
-| └ | toHexString | Internal 🔒 |   | |
-||||||
-| **Math** | Library |  |||
-| └ | max | Internal 🔒 |   | |
-| └ | min | Internal 🔒 |   | |
-| └ | average | Internal 🔒 |   | |
-| └ | ceilDiv | Internal 🔒 |   | |
-| └ | mulDiv | Internal 🔒 |   | |
-| └ | mulDiv | Internal 🔒 |   | |
-| └ | sqrt | Internal 🔒 |   | |
-| └ | sqrt | Internal 🔒 |   | |
-| └ | log2 | Internal 🔒 |   | |
-| └ | log2 | Internal 🔒 |   | |
-| └ | log10 | Internal 🔒 |   | |
-| └ | log10 | Internal 🔒 |   | |
-| └ | log256 | Internal 🔒 |   | |
-| └ | log256 | Internal 🔒 |   | |
-||||||
-| **ERC165** | Implementation | IERC165 |||
-| └ | supportsInterface | Public ❗️ |   |NO❗️ |
-||||||
-| **Ownable** | Implementation | Context |||
-| └ | <Constructor> | Public ❗️ | 🛑  |NO❗️ |
-| └ | owner | Public ❗️ |   |NO❗️ |
-| └ | _checkOwner | Internal 🔒 |   | |
-| └ | renounceOwnership | Public ❗️ | 🛑  | onlyOwner |
-| └ | transferOwnership | Public ❗️ | 🛑  | onlyOwner |
-| └ | _transferOwnership | Internal 🔒 | 🛑  | |
-||||||
-| **EnumerableMap** | Library |  |||
-| └ | set | Internal 🔒 | 🛑  | |
-| └ | remove | Internal 🔒 | 🛑  | |
-| └ | contains | Internal 🔒 |   | |
-| └ | length | Internal 🔒 |   | |
-| └ | at | Internal 🔒 |   | |
-| └ | tryGet | Internal 🔒 |   | |
-| └ | get | Internal 🔒 |   | |
-| └ | get | Internal 🔒 |   | |
-| └ | set | Internal 🔒 | 🛑  | |
-| └ | remove | Internal 🔒 | 🛑  | |
-| └ | contains | Internal 🔒 |   | |
-| └ | length | Internal 🔒 |   | |
-| └ | at | Internal 🔒 |   | |
-| └ | tryGet | Internal 🔒 |   | |
-| └ | get | Internal 🔒 |   | |
-| └ | get | Internal 🔒 |   | |
-| └ | set | Internal 🔒 | 🛑  | |
-| └ | remove | Internal 🔒 | 🛑  | |
-| └ | contains | Internal 🔒 |   | |
-| └ | length | Internal 🔒 |   | |
-| └ | at | Internal 🔒 |   | |
-| └ | tryGet | Internal 🔒 |   | |
-| └ | get | Internal 🔒 |   | |
-| └ | get | Internal 🔒 |   | |
-| └ | set | Internal 🔒 | 🛑  | |
-| └ | remove | Internal 🔒 | 🛑  | |
-| └ | contains | Internal 🔒 |   | |
-| └ | length | Internal 🔒 |   | |
-| └ | at | Internal 🔒 |   | |
-| └ | tryGet | Internal 🔒 |   | |
-| └ | get | Internal 🔒 |   | |
-| └ | get | Internal 🔒 |   | |
-| └ | set | Internal 🔒 | 🛑  | |
-| └ | remove | Internal 🔒 | 🛑  | |
-| └ | contains | Internal 🔒 |   | |
-| └ | length | Internal 🔒 |   | |
-| └ | at | Internal 🔒 |   | |
-| └ | tryGet | Internal 🔒 |   | |
-| └ | get | Internal 🔒 |   | |
-| └ | get | Internal 🔒 |   | |
-||||||
-| **EnumerableSet** | Library |  |||
-| └ | _add | Private 🔐 | 🛑  | |
-| └ | _remove | Private 🔐 | 🛑  | |
-| └ | _contains | Private 🔐 |   | |
-| └ | _length | Private 🔐 |   | |
-| └ | _at | Private 🔐 |   | |
-| └ | _values | Private 🔐 |   | |
-| └ | add | Internal 🔒 | 🛑  | |
-| └ | remove | Internal 🔒 | 🛑  | |
-| └ | contains | Internal 🔒 |   | |
-| └ | length | Internal 🔒 |   | |
-| └ | at | Internal 🔒 |   | |
-| └ | values | Internal 🔒 |   | |
-| └ | add | Internal 🔒 | 🛑  | |
-| └ | remove | Internal 🔒 | 🛑  | |
-| └ | contains | Internal 🔒 |   | |
-| └ | length | Internal 🔒 |   | |
-| └ | at | Internal 🔒 |   | |
-| └ | values | Internal 🔒 |   | |
-| └ | add | Internal 🔒 | 🛑  | |
-| └ | remove | Internal 🔒 | 🛑  | |
-| └ | contains | Internal 🔒 |   | |
-| └ | length | Internal 🔒 |   | |
-| └ | at | Internal 🔒 |   | |
-| └ | values | Internal 🔒 |   | |
-||||||
-| **ERC721URIStorage** | Implementation | ERC721 |||
-| └ | tokenURI | Public ❗️ |   |NO❗️ |
-| └ | _setTokenURI | Internal 🔒 | 🛑  | |
-| └ | _burn | Internal 🔒 | 🛑  | |
-||||||
-| **ReentrancyGuard** | Implementation |  |||
-| └ | <Constructor> | Public ❗️ | 🛑  |NO❗️ |
-| └ | _nonReentrantBefore | Private 🔐 | 🛑  | |
-| └ | _nonReentrantAfter | Private 🔐 | 🛑  | |
-||||||
-| **IERC721Enumerable** | Interface | IERC721 |||
-| └ | totalSupply | External ❗️ |   |NO❗️ |
-| └ | tokenOfOwnerByIndex | External ❗️ |   |NO❗️ |
-| └ | tokenByIndex | External ❗️ |   |NO❗️ |
-||||||
-| **Counters** | Library |  |||
-| └ | current | Internal 🔒 |   | |
-| └ | increment | Internal 🔒 | 🛑  | |
-| └ | decrement | Internal 🔒 | 🛑  | |
-| └ | reset | Internal 🔒 | 🛑  | |
-||||||
-| **ISytemapAssetRegistry** | Interface |  |||
-| └ | safeMintNewPropertyInfo | External ❗️ | 🛑  |NO❗️ |
-| └ | changePropertyPriceByOwner | External ❗️ | 🛑  |NO❗️ |
-| └ | getTotalNumberOfPropertyOwnedByAnAddress | External ❗️ |   |NO❗️ |
-| └ | getNumberOfPropertyTokensMinted | External ❗️ |   |NO❗️ |
-| └ | getAllMintedPropertyDetails | External ❗️ |   |NO❗️ |
-
-
- Legend
-
-|  Symbol  |  Meaning  |
-|:--------:|-----------|
-|    🛑    | Function can modify state |
-|    💵    | Function is payable |
-
+Node.js, TypeScript, Backend Server, Express, ESLint, Prettier, Husky, Lint-Staged, Swagger, Jest, API, Development, Open Source, REST API

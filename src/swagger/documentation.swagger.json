@@ -1,0 +1,139 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "version": "1.0.0",
+    "title": "Node.js and TypeScript Backend Starter Kit",
+    "description": "Welcome to the Node.js and TypeScript Backend Starter Kit! This repository provides a robust foundation for building scalable and maintainable backend applications using Node.js and TypeScript. Perfect for developers looking to kickstart new projects without the repetitive setup tasks."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000/api/v1",
+      "description": ""
+    }
+  ],
+  "tags": [
+    {
+      "name": "Welcome",
+      "description": "Default API Endpoints"
+    },
+    {
+      "name": "Test Error Handling",
+      "description": "Test Error Handling API Endpoints"
+    }
+  ],
+  "paths": {
+    "/default/welcome": {
+      "get": {
+        "tags": ["Welcome"],
+        "summary": "Welcome API Endpoint to start",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Some description...",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "sucess": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Welcome to Node Typescript Boilerplate"
+                    }
+                  },
+                  "xml": {
+                    "name": "main"
+                  }
+                }
+              },
+              "application/xml": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "sucess": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Welcome to Node Typescript Boilerplate"
+                    }
+                  },
+                  "xml": {
+                    "name": "main"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/default/benchmark": {
+      "get": {
+        "description": "",
+        "parameters": [
+          {
+            "name": "requests",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/test/system-error": {
+      "get": {
+        "tags": ["Test Error Handling"],
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/test/programmer-error": {
+      "get": {
+        "tags": ["Test Error Handling"],
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/test/operational-error": {
+      "get": {
+        "tags": ["Test Error Handling"],
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    },
+    "/test/unhandle-promise-error": {
+      "get": {
+        "tags": ["Test Error Handling"],
+        "description": "",
+        "responses": {
+          "default": {
+            "description": ""
+          }
+        }
+      }
+    }
+  }
+}
