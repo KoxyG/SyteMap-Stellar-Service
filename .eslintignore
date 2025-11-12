@@ -1,0 +1,9 @@
+dist
+node_modules
+coverage
+*.js
+build
+.husky
+**/*.test.ts
+**/*.spec.ts
+
