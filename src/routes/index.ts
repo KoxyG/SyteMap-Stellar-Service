@@ -1,11 +1,9 @@
 import { Router } from 'express';
-
-import defaultRoutes from './default.routes';
-import testErrorRoutes from './errorTest.routes';
+import stellarRoutes from './stellar.routes';
 
 const v1Router = Router();
 
-v1Router.use('/default', defaultRoutes);
-v1Router.use('/test', testErrorRoutes);
+
+v1Router.use('', stellarRoutes);
 
 export default v1Router;

@@ -13,124 +13,21 @@
   ],
   "tags": [
     {
-      "name": "Welcome",
-      "description": "Default API Endpoints"
-    },
-    {
-      "name": "Test Error Handling",
-      "description": "Test Error Handling API Endpoints"
+      "name": "Stellar",
+      "description": "Sytemap Stellar Blockchain API Endpoints"
     }
   ],
   "paths": {
-    "/default/welcome": {
-      "get": {
-        "tags": ["Welcome"],
-        "summary": "Welcome API Endpoint to start",
-        "description": "",
-        "responses": {
-          "200": {
-            "description": "Some description...",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "sucess": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Welcome to Node Typescript Boilerplate"
-                    }
-                  },
-                  "xml": {
-                    "name": "main"
-                  }
-                }
-              },
-              "application/xml": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "sucess": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "message": {
-                      "type": "string",
-                      "example": "Welcome to Node Typescript Boilerplate"
-                    }
-                  },
-                  "xml": {
-                    "name": "main"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/default/benchmark": {
-      "get": {
-        "description": "",
-        "parameters": [
-          {
-            "name": "requests",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
+    "/create_stellar_account": {
+      "post": {
+        "tags": [
+          "Stellar"
         ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/test/system-error": {
-      "get": {
-        "tags": ["Test Error Handling"],
         "description": "",
+        "operationId": "create_stellar_account",
         "responses": {
-          "default": {
-            "description": ""
-          }
-        }
-      }
-    },
-    "/test/programmer-error": {
-      "get": {
-        "tags": ["Test Error Handling"],
-        "description": "",
-        "responses": {
-          "default": {
-            "description": ""
-          }
-        }
-      }
-    },
-    "/test/operational-error": {
-      "get": {
-        "tags": ["Test Error Handling"],
-        "description": "",
-        "responses": {
-          "default": {
-            "description": ""
-          }
-        }
-      }
-    },
-    "/test/unhandle-promise-error": {
-      "get": {
-        "tags": ["Test Error Handling"],
-        "description": "",
-        "responses": {
-          "default": {
-            "description": ""
+          "201": {
+            "description": "Created"
           }
         }
       }

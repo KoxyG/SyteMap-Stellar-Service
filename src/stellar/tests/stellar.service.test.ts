@@ -1,196 +1,122 @@
-import stellarService from '../stellar.service';
+import { HttpException } from '../../exceptions/http.exception';
 
-/**
- * Stellar Service Tests
- * Run with: npm test src/stellar/tests/stellar.service.test.ts
- */
-describe('StellarService', () => {
-  describe('Keypair Generation', () => {
-    it('should generate a valid keypair', () => {
-      const keypair = stellarService.generateKeypair();
+jest.mock('../../encryption/encryption.service', () => ({
+  __esModule: true,
+  default: {
+    encryptSecretKey: jest.fn(),
+  },
+}));
 
-      expect(keypair).toBeDefined();
-      expect(keypair.publicKey).toBeDefined();
-      expect(keypair.secretKey).toBeDefined();
-      expect(keypair.publicKey).toMatch(/^G[A-Z0-9]{55}$/);
-      expect(keypair.secretKey).toMatch(/^S[A-Z0-9]{55}$/);
-    });
+jest.mock('../../utils/logger.utils', () => ({
+  __esModule: true,
+  default: {
+    info: jest.fn(),
+    error: jest.fn(),
+  },
+}));
 
-    it('should generate different keypairs', () => {
-      const keypair1 = stellarService.generateKeypair();
-      const keypair2 = stellarService.generateKeypair();
+const mockTransaction = { sign: jest.fn() };
+const mockBuilderInstance = {
+  addOperation: jest.fn().mockReturnThis(),
+  setTimeout: jest.fn().mockReturnThis(),
+  build: jest.fn().mockReturnValue(mockTransaction),
+};
 
-      expect(keypair1.publicKey).not.toBe(keypair2.publicKey);
-      expect(keypair1.secretKey).not.toBe(keypair2.secretKey);
-    });
+const mockServerInstance = {
+  loadAccount: jest.fn().mockResolvedValue({ id: 'sponsor-account' }),
+  submitTransaction: jest.fn().mockResolvedValue({ hash: 'tx-hash' }),
+};
+
+jest.mock('@stellar/stellar-sdk', () => ({
+  BASE_FEE: '100',
+  Networks: { PUBLIC: 'PUBLIC', TESTNET: 'TESTNET' },
+  Keypair: {
+    random: jest.fn(),
+    fromSecret: jest.fn(),
+  },
+  Horizon: {
+    Server: jest.fn(() => mockServerInstance),
+  },
+  Operation: {
+    beginSponsoringFutureReserves: jest.fn().mockReturnValue({ op: 'begin' }),
+    createAccount: jest.fn().mockReturnValue({ op: 'create' }),
+    endSponsoringFutureReserves: jest.fn().mockReturnValue({ op: 'end' }),
+    changeTrust: jest.fn().mockReturnValue({ op: 'change' }),
+  },
+  TransactionBuilder: jest.fn(() => mockBuilderInstance),
+}));
+
+describe('StellarService.generateAndCreateAccount', () => {
+  const originalEnv = process.env;
+
+  beforeEach(() => {
+    jest.resetModules();
+    jest.clearAllMocks();
+    process.env = { ...originalEnv };
+    mockTransaction.sign.mockClear();
+    mockBuilderInstance.addOperation.mockClear();
+    mockBuilderInstance.setTimeout.mockClear();
+    mockBuilderInstance.build.mockClear();
+    mockServerInstance.loadAccount.mockClear();
+    mockServerInstance.submitTransaction.mockClear();
   });
 
-  describe('Key Validation', () => {
-    it('should validate correct public key', () => {
-      const keypair = stellarService.generateKeypair();
-      expect(stellarService.isValidPublicKey(keypair.publicKey)).toBe(true);
-    });
-
-    it('should reject invalid public key', () => {
-      expect(stellarService.isValidPublicKey('invalid-key')).toBe(false);
-      expect(stellarService.isValidPublicKey('')).toBe(false);
-      expect(stellarService.isValidPublicKey('GABC123')).toBe(false);
-    });
-
-    it('should validate correct secret key', () => {
-      const keypair = stellarService.generateKeypair();
-      expect(stellarService.isValidSecretKey(keypair.secretKey)).toBe(true);
-    });
-
-    it('should reject invalid secret key', () => {
-      expect(stellarService.isValidSecretKey('invalid-key')).toBe(false);
-      expect(stellarService.isValidSecretKey('')).toBe(false);
-      expect(stellarService.isValidSecretKey('SABC123')).toBe(false);
-    });
+  afterAll(() => {
+    process.env = originalEnv;
   });
 
-  describe('Network Information', () => {
-    it('should return network configuration', () => {
-      const networkInfo = stellarService.getNetworkInfo();
+  const loadService = async () => (await import('../stellar.service')).default;
 
-      expect(networkInfo).toBeDefined();
-      expect(networkInfo.network).toBeDefined();
-      expect(networkInfo.horizonUrl).toBeDefined();
-      expect(networkInfo.networkPassphrase).toBeDefined();
-      expect(['testnet', 'mainnet']).toContain(networkInfo.network);
-    });
+  it('throws when STELLAR_HORIZON_URL is missing', async () => {
+    process.env = {
+      ...process.env,
+      SPONSOR_PUBLIC_KEY: 'SPONSOR_PUB',
+      SPONSOR_PRIVATE_KEY: 'SPONSOR_PRIV',
+    };
+    delete process.env.STELLAR_HORIZON_URL;
+
+    const stellarService = await loadService();
+
+    await expect(stellarService.generateAndCreateAccount()).rejects.toThrow('Failed to generate and create account');
   });
 
-  describe('Testnet Operations', () => {
-    it('should create and fund testnet account', async () => {
-      const result = await stellarService.createAndFundTestnetAccount();
+  it('creates account, encrypts secret and adds trustline', async () => {
+    process.env = {
+      ...process.env,
+      SPONSOR_PUBLIC_KEY: 'SPONSOR_PUB',
+      SPONSOR_PRIVATE_KEY: 'SPONSOR_PRIV',
+      STELLAR_HORIZON_URL: 'https://horizon.test',
+      SYTE_ASSET_CODE: 'SYTE',
+      SYTE_ASSET_ISSUER: 'ISSUER',
+      NODE_ENV: 'test',
+    };
 
-      expect(result).toBeDefined();
-      expect(result.publicKey).toBeDefined();
-      expect(result.secretKey).toBeDefined();
+    const StellarSdk = jest.requireMock('@stellar/stellar-sdk');
+    const mockKeypair = {
+      secret: jest.fn().mockReturnValue('SECRET'),
+      publicKey: jest.fn().mockReturnValue('PUBLIC'),
+    };
+    (StellarSdk.Keypair.random as jest.Mock).mockReturnValue(mockKeypair);
+    (StellarSdk.Keypair.fromSecret as jest.Mock).mockReturnValue({ publicKey: jest.fn() });
 
-      // Check if funded successfully (may fail if rate limited)
-      if (result.funded) {
-        expect(result.transactionHash).toBeDefined();
-        expect(stellarService.isValidPublicKey(result.publicKey)).toBe(true);
-        expect(stellarService.isValidSecretKey(result.secretKey)).toBe(true);
-      }
-    }, 30000); // 30 second timeout for network request
+    const encryptionService = (await import('../../encryption/encryption.service')).default as unknown as {
+      encryptSecretKey: jest.Mock;
+    };
+    encryptionService.encryptSecretKey.mockResolvedValue('encrypted-secret');
 
-    it('should get account info for funded account', async () => {
-      // First create and fund an account
-      const createResult = await stellarService.createAndFundTestnetAccount();
+    const stellarService = await loadService();
+    const addTrustlineSpy = jest.spyOn(stellarService as unknown as { addTrustline: jest.Mock }, 'addTrustline').mockResolvedValue(undefined);
+    const result = await stellarService.generateAndCreateAccount();
 
-      if (!createResult.funded) {
-        console.log('Skipping test: Account funding failed (possible rate limit)');
-        return;
-      }
-
-      // Wait a bit for account to be available
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Get account info
-      const accountInfo = await stellarService.getAccountInfo(createResult.publicKey);
-
-      expect(accountInfo).toBeDefined();
-      expect(accountInfo?.id).toBe(createResult.publicKey);
-      expect(accountInfo?.balances).toBeDefined();
-      expect(accountInfo?.balances.length).toBeGreaterThan(0);
-    }, 40000);
-
-    it('should return null for non-existent account', async () => {
-      const randomKeypair = stellarService.generateKeypair();
-      const accountInfo = await stellarService.getAccountInfo(randomKeypair.publicKey);
-
-      expect(accountInfo).toBeNull();
+    expect(result).toEqual({
+      publicKey: 'PUBLIC',
+      encryptedSecret: 'encrypted-secret',
+      transactionHash: 'tx-hash',
+      trustlineAdded: true,
     });
-
-    it('should check if account exists', async () => {
-      const randomKeypair = stellarService.generateKeypair();
-      const exists = await stellarService.accountExists(randomKeypair.publicKey);
-
-      expect(exists).toBe(false);
-    });
-
-    it('should get balance for funded account', async () => {
-      const createResult = await stellarService.createAndFundTestnetAccount();
-
-      if (!createResult.funded) {
-        console.log('Skipping test: Account funding failed');
-        return;
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      const balance = await stellarService.getBalance(createResult.publicKey);
-
-      expect(balance).toBeDefined();
-      expect(balance?.balance).toBeDefined();
-      expect(balance?.asset).toBe('XLM');
-      expect(parseFloat(balance?.balance || '0')).toBeGreaterThan(0);
-    }, 40000);
-  });
-
-  describe('Payment Operations', () => {
-    it('should reject payment with invalid destination', async () => {
-      const keypair = stellarService.generateKeypair();
-
-      const result = await stellarService.sendPayment({
-        sourceSecret: keypair.secretKey,
-        destinationId: 'invalid-address',
-        amount: '10',
-      });
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBeDefined();
-    });
-
-    it('should reject payment with zero amount', async () => {
-      const sourceKeypair = stellarService.generateKeypair();
-      const destKeypair = stellarService.generateKeypair();
-
-      const result = await stellarService.sendPayment({
-        sourceSecret: sourceKeypair.secretKey,
-        destinationId: destKeypair.publicKey,
-        amount: '0',
-      });
-
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('greater than zero');
-    });
-  });
-
-  describe('History Operations', () => {
-    it('should get transaction history for account', async () => {
-      const createResult = await stellarService.createAndFundTestnetAccount();
-
-      if (!createResult.funded) {
-        console.log('Skipping test: Account funding failed');
-        return;
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      const history = await stellarService.getTransactionHistory(createResult.publicKey, 5);
-
-      expect(history).toBeDefined();
-      expect(Array.isArray(history)).toBe(true);
-    }, 40000);
-
-    it('should get payment history for account', async () => {
-      const createResult = await stellarService.createAndFundTestnetAccount();
-
-      if (!createResult.funded) {
-        console.log('Skipping test: Account funding failed');
-        return;
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      const history = await stellarService.getPaymentHistory(createResult.publicKey, 5);
-
-      expect(history).toBeDefined();
-      expect(Array.isArray(history)).toBe(true);
-    }, 40000);
+    expect(encryptionService.encryptSecretKey).toHaveBeenCalledWith('SECRET');
+    expect(addTrustlineSpy).toHaveBeenCalledWith('PUBLIC', 'SECRET');
+    expect(mockServerInstance.submitTransaction).toHaveBeenCalled();
+    expect(mockTransaction.sign).toHaveBeenCalledTimes(2);
   });
 });

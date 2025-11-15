@@ -27,23 +27,33 @@ class StellarService {
   private readonly encryptionService = encryptionService;
 
   /**
-   * Generate a random wallet and create the account on Stellar network
-   * @returns Object with publicKey, encrypted secret, and transaction result
-   * @throws Error if wallet generation or account creation fails
+   * Generate a random wallet, create the account on Stellar network,
+   * and automatically add a trustline for the new wallet.
+   * @returns Object with publicKey, encrypted secret, transaction info, and trustline status
+   * @throws Error if wallet generation, account creation, or trustline setup fails
    */
   async generateAndCreateAccount(): Promise<{
     publicKey: string;
     encryptedSecret: string;
     transactionHash: string;
+    trustlineAdded: boolean;
   }> {
-    try {
-      // Step 1: Generate random keypair
-      const keypair = Keypair.random();
-      const secretKey = keypair.secret();
-      const publicKey = keypair.publicKey();
+    const logContext = '[StellarService.generateAndCreateAccount]';
+    // Step 1: Generate random keypair
+    const keypair = Keypair.random();
+    const secretKey = keypair.secret();
+    const publicKey = keypair.publicKey();
+    let transactionHash = '';
+    let trustlineAdded = false;
+    logger.debug(`${logContext} Generated keypair for public key ${publicKey}`);
 
+    try {
+      logger.debug(`${logContext} Starting account creation workflow`);
+
+     
       // Step 3: Validate environment variables
       if (!process.env.STELLAR_HORIZON_URL) {
+        logger.error(`${logContext} Missing STELLAR_HORIZON_URL`);
         throw new HttpException(
           {
             status: 500,
@@ -56,6 +66,7 @@ class StellarService {
 
       const sponsorPubKey = process.env.SPONSOR_PUBLIC_KEY;
       if (!sponsorPubKey) {
+        logger.error(`${logContext} Missing SPONSOR_PUBLIC_KEY`);
         throw new HttpException(
           {
             status: 500,
@@ -67,6 +78,7 @@ class StellarService {
       }
 
       if (!process.env.SPONSOR_PRIVATE_KEY) {
+        logger.error(`${logContext} Missing SPONSOR_PRIVATE_KEY`);
         throw new HttpException(
           {
             status: 500,
@@ -105,24 +117,21 @@ class StellarService {
         )
         .setTimeout(180)
         .build();
+      logger.debug(`${logContext} Built sponsorship transaction for ${publicKey}`);
 
       // Sign with both sponsor and new account
       transaction.sign(sponsorKeypair);
       transaction.sign(keypair);
+      logger.debug(`${logContext} Transaction signed by sponsor and new account`);
 
       // Submit transaction
       const result = await server.submitTransaction(transaction);
-      logger.info(`Account created successfully: ${publicKey}, tx: ${result.hash}`);
-      // Final step: Encrypt the secret key
-      const encryptedSecret = await this.encryptionService.encryptSecretKey(secretKey);
-
-      return {
-        publicKey,
-        encryptedSecret,
-        transactionHash: result.hash,
-      };
+      transactionHash = result.hash;
+      logger.info(`Account created successfully: ${publicKey}, tx: ${transactionHash}`);
     } catch (error) {
-      logger.error(`Failed to generate and create account: ${error}`);
+      logger.error(
+        `${logContext} Failed to generate and create account: ${error instanceof Error ? error.message : error}`
+      );
 
       if (error instanceof HttpException) {
         throw error;
@@ -168,6 +177,38 @@ class StellarService {
         500
       );
     }
+    try {
+      logger.debug(`${logContext} Initiating trustline setup for ${publicKey}`);
+      await this.addTrustline(publicKey, secretKey);
+      trustlineAdded = true;
+    } catch (error) {
+      logger.error(
+        `${logContext} Failed to add trustline for ${publicKey}: ${error instanceof Error ? error.message : error}`
+      );
+
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      throw new HttpException(
+        {
+          status: 500,
+          success: false,
+          message: 'Failed to add trustline after account creation',
+        },
+        500
+      );
+    }
+
+    const encryptedSecret = await this.encryptionService.encryptSecretKey(secretKey);
+    logger.debug(`${logContext} Secret key encrypted for ${publicKey}`);
+
+    return {
+      publicKey,
+      encryptedSecret,
+      transactionHash,
+      trustlineAdded,
+    };
   }
 
   /**
@@ -176,7 +217,7 @@ class StellarService {
    * @returns Decrypted secret key
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async getSecretKey(userUuid: string): Promise<string> {
+  private async getSecretKey(userUuid: string): Promise<string> {
     // TODO: Implement database query to get encrypted secret key for userUuid
     // ASK FOR AN ENDPOINT THAT CAN RETURN THE SECRET KEY FOR A USER IN THE DATABASE.
 
@@ -230,34 +271,30 @@ class StellarService {
   }
 
   /**
-   * Add trustline for SYTE currency to a user's Stellar account.
-   * @param userUuid - The UUID of the user.
+   * Add trustline for SYTE currency using provided keys.
+   * @param publicKey - Account public key
+   * @param decryptedSecret - Plain secret key (will not be stored)
    */
-  async addTrustline(userUuid: string) {
-    const user = ''; // TODO: Get user information from database
-
-    if (!user) {
+  private async addTrustline(publicKey: string, decryptedSecret: string): Promise<void> {
+    const logContext = '[StellarService.addTrustline]';
+    if (!publicKey || !decryptedSecret) {
+      logger.error(
+        `${logContext} Missing credentials | publicKeyPresent=${Boolean(publicKey)} secretPresent=${Boolean(decryptedSecret)}`
+      );
       throw new HttpException(
         {
-          status: 404,
+          status: 400,
           success: false,
-          message: 'User not found',
+          message: 'Public key and secret key are required',
         },
-        404
+        400
       );
     }
 
     try {
-      const public_key = ''; // TODO: Get user public key from database
-      // console.log('User public key:', public_key);
-
-      const usersecretKey = await this.getSecretKey(userUuid); // TODO: use user_uuid to decrypt the secret key.
-
-      const userKeypair = Keypair.fromSecret(usersecretKey);
-      // console.log('User keypair created successfully');
-
-      // Validate environment variables
+      logger.debug(`${logContext} Starting trustline workflow for ${publicKey}`);
       if (!process.env.SPONSOR_PRIVATE_KEY) {
+        logger.error(`${logContext} Missing SPONSOR_PRIVATE_KEY`);
         throw new HttpException(
           {
             status: 500,
@@ -269,6 +306,7 @@ class StellarService {
       }
 
       if (!process.env.STELLAR_HORIZON_URL) {
+        logger.error(`${logContext} Missing STELLAR_HORIZON_URL`);
         throw new HttpException(
           {
             status: 500,
@@ -280,6 +318,7 @@ class StellarService {
       }
 
       if (!process.env.SYTE_ASSET_CODE) {
+        logger.error(`${logContext} Missing SYTE_ASSET_CODE`);
         throw new HttpException(
           {
             status: 500,
@@ -290,7 +329,8 @@ class StellarService {
         );
       }
 
-      if (!process.env.SYTE_ASSET_ISSUER) {
+      if (!process.env.SYTE_ISSUER_ADDRESS) {
+        logger.error(`${logContext} Missing SYTE_ISSUER_ADDRESS`);
         throw new HttpException(
           {
             status: 500,
@@ -303,6 +343,7 @@ class StellarService {
 
       const sponsorPubKey = process.env.SPONSOR_PUBLIC_KEY;
       if (!sponsorPubKey) {
+        logger.error(`${logContext} Missing SPONSOR_PUBLIC_KEY`);
         throw new HttpException(
           {
             status: 500,
@@ -315,32 +356,31 @@ class StellarService {
 
       const sponsorKeypair = Keypair.fromSecret(process.env.SPONSOR_PRIVATE_KEY);
       const server = new Horizon.Server(process.env.STELLAR_HORIZON_URL);
-
-      // Create Asset object for SYTE token
-      const paymentAsset = new Asset(process.env.SYTE_ASSET_CODE, process.env.SYTE_ASSET_ISSUER);
-
-      // console.log('Loading source account...');
+      const paymentAsset = new Asset(process.env.SYTE_ASSET_CODE, process.env.SYTE_ISSUER_ADDRESS);
       const sourceAccount = await server.loadAccount(sponsorPubKey);
-      // Build transaction
+      logger.debug(`${logContext} Loaded sponsor account ${sponsorPubKey}`);
+      const userKeypair = Keypair.fromSecret(decryptedSecret);
+      logger.debug(`${logContext} Prepared trustline transaction context for ${publicKey}`);
+
       const transaction = new TransactionBuilder(sourceAccount, {
         fee: BASE_FEE,
         networkPassphrase: this.params.networkPassphrase,
       })
         .addOperation(
           Operation.beginSponsoringFutureReserves({
-            sponsoredId: public_key,
+            sponsoredId: publicKey,
           })
         )
         .addOperation(
           Operation.changeTrust({
-            source: public_key,
+            source: publicKey,
             asset: paymentAsset,
             limit: '10000000',
           })
         )
         .addOperation(
           Operation.endSponsoringFutureReserves({
-            source: public_key,
+            source: publicKey,
           })
         )
         .setTimeout(180)
@@ -348,12 +388,14 @@ class StellarService {
 
       transaction.sign(sponsorKeypair);
       transaction.sign(userKeypair);
-      // Submit the transaction
-      await server.submitTransaction(transaction);
+      logger.debug(`${logContext} Signed trustline transaction for ${publicKey}`);
 
-      logger.info(`Trustline added successfully for user: ${userUuid}`);
+      await server.submitTransaction(transaction);
+      logger.info(`Trustline added successfully for account: ${publicKey}`);
     } catch (error) {
-      logger.error(`Failed to add trustline: ${error}`);
+      logger.error(
+        `${logContext} Failed to add trustline for ${publicKey}: ${error instanceof Error ? error.message : error}`
+      );
 
       if (error instanceof HttpException) {
         throw error;

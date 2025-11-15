@@ -1,3 +1,4 @@
+import path from 'path';
 import swaggerAutogen from 'swagger-autogen';
 
 import logger from '../utils/logger.utils';
@@ -17,18 +18,14 @@ const documentConfiguration = {
   ],
   tags: [
     {
-      name: 'Welcome', // Tag name
-      description: 'Default API Endpoints', // Tag description
-    },
-    {
-      name: 'Test Error Handling', // Tag name
-      description: 'Test Error Handling API Endpoints', // Tag description
+      name: 'Stellar',
+      description: 'Sytemap Stellar Blockchain API Endpoints',
     },
   ],
 };
 
-export const outputFile = './src/swagger/documentation.swagger.json';
-export const routes = ['./routes/index'];
+export const outputFile = path.resolve(__dirname, 'documentation.swagger.json');
+export const routes = [path.resolve(__dirname, '../routes/index')];
 
 swaggerAutogen({ openapi: '3.0.0' })(outputFile, routes, documentConfiguration)
   .then(() => logger.info('Swagger Documentation Generated'))
