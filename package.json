@@ -6,6 +6,7 @@
   "license": "MIT",
   "scripts": {
     "build": "yarn tsc",
+    "start": "ts-node ./src/index.ts",
     "dev": "nodemon --config nodemon.json",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
