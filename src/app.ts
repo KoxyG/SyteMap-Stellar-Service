@@ -64,6 +64,11 @@ export default (): Application => {
       : path.join(process.cwd(), 'src', 'swagger', 'documentation.swagger.json');
     if (fs.existsSync(swaggerDocumentPath)) {
       const swaggerDocument = JSON.parse(fs.readFileSync(swaggerDocumentPath, { encoding: 'utf-8' }));
+      
+      // Log for debugging - verify paths exist
+      const pathKeys = swaggerDocument.paths ? Object.keys(swaggerDocument.paths) : [];
+      logger.info(`Swagger document loaded from: ${swaggerDocumentPath}`);
+      logger.info(`Swagger paths found: ${pathKeys.length} - ${pathKeys.join(', ')}`);
 
       // Dynamically update server URL based on current environment
       // This ensures the Swagger UI always shows the correct production URL
@@ -91,10 +96,17 @@ export default (): Application => {
         // Create a fresh copy of the swagger document with updated server URL
         // Deep clone to preserve all paths, tags, and other properties
         const dynamicSwaggerDoc = JSON.parse(JSON.stringify(swaggerDocument));
-
+        
         // Ensure paths are preserved (they should be, but let's be explicit)
-        if (!dynamicSwaggerDoc.paths) {
-          dynamicSwaggerDoc.paths = swaggerDocument.paths;
+        if (!dynamicSwaggerDoc.paths || Object.keys(dynamicSwaggerDoc.paths).length === 0) {
+          dynamicSwaggerDoc.paths = swaggerDocument.paths || {};
+          logger.warn(`Swagger paths missing in clone, restoring from original. Paths: ${Object.keys(dynamicSwaggerDoc.paths).join(', ')}`);
+        }
+        
+        // Verify paths exist before serving
+        const dynamicPathKeys = Object.keys(dynamicSwaggerDoc.paths || {});
+        if (dynamicPathKeys.length === 0) {
+          logger.error('Swagger document has no paths! Original paths: ' + Object.keys(swaggerDocument.paths || {}).join(', '));
         }
 
         // Update server URL
@@ -106,7 +118,7 @@ export default (): Application => {
         ];
 
         // swaggerUi.setup returns an array of middleware functions
-        // Pass the spec directly (not as a URL) to ensure all paths are displayed
+        // Pass the spec directly as the first parameter - this ensures all paths are included
         const handlers = swaggerUi.setup(dynamicSwaggerDoc, {
           customCss: '.swagger-ui .topbar { display: none }',
           swaggerOptions: {
@@ -114,6 +126,7 @@ export default (): Application => {
             displayRequestDuration: true,
             filter: true,
             tryItOutEnabled: true,
+            // Don't use url option when passing spec directly - it causes conflicts
           },
           customSiteTitle: 'API Documentation',
         });
@@ -127,27 +140,33 @@ export default (): Application => {
 
       // Serve Swagger UI at /docs - handle all sub-paths for client-side routing
       app.use('/docs', swaggerUi.serve);
-      
+
       // Serve the swagger JSON dynamically at /docs/swagger.json (MUST be before wildcard route)
       app.get('/docs/swagger.json', (req: Request, res: Response) => {
         const serverUrl = getServerUrl(req);
         // Deep clone to preserve all paths
         const dynamicSwaggerDoc = JSON.parse(JSON.stringify(swaggerDocument));
-        
+
         // Ensure paths are preserved
-        if (!dynamicSwaggerDoc.paths) {
-          dynamicSwaggerDoc.paths = swaggerDocument.paths;
+        if (!dynamicSwaggerDoc.paths || Object.keys(dynamicSwaggerDoc.paths).length === 0) {
+          dynamicSwaggerDoc.paths = swaggerDocument.paths || {};
+          logger.warn(`Swagger paths missing in JSON endpoint, restoring. Paths: ${Object.keys(dynamicSwaggerDoc.paths).join(', ')}`);
         }
-        
+
         dynamicSwaggerDoc.servers = [
           {
             url: `${serverUrl}/api/v1`,
             description: process.env.NODE_ENV === 'production' ? 'Production Server' : 'Development Server',
           },
         ];
+        
+        // Log for debugging
+        const pathCount = Object.keys(dynamicSwaggerDoc.paths || {}).length;
+        logger.debug(`Serving swagger.json with ${pathCount} paths: ${Object.keys(dynamicSwaggerDoc.paths || {}).join(', ')}`);
+        
         res.json(dynamicSwaggerDoc);
       });
-      
+
       // Handle Swagger UI routes (must be after specific routes)
       app.get('/docs', swaggerUiHandler);
       app.get('/docs/*', swaggerUiHandler);
