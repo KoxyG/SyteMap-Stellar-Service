@@ -29,9 +29,14 @@ if (cluster.isPrimary) {
   // create express app
   const expressApp = app();
   // start listening to requests
-  expressApp.listen(env.APP_PORT, () => {
+  // Bind to 0.0.0.0 to accept connections from all interfaces (required for Render/Docker)
+  const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+  expressApp.listen(env.APP_PORT, host, () => {
     logger.info('=== SERVER STARTED ===');
-    logger.info(`Server is up & running on http://localhost:${env.APP_PORT}`);
+    logger.info(`Server is up & running on http://${host}:${env.APP_PORT}`);
+    if (env.BASE_URL && env.BASE_URL !== `http://${host}:${env.APP_PORT}`) {
+      logger.info(`Public URL: ${env.BASE_URL}`);
+    }
   });
 }
 

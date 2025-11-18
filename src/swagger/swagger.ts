@@ -2,6 +2,7 @@ import path from 'path';
 import swaggerAutogen from 'swagger-autogen';
 
 import logger from '../utils/logger.utils';
+import env from '../config/app.config';
 
 const documentConfiguration = {
   info: {
@@ -12,8 +13,8 @@ const documentConfiguration = {
   },
   servers: [
     {
-      url: 'http://localhost:8000/api/v1', // by default: 'http://localhost:3000'
-      description: '', // by default: ''
+      url: `${env.BASE_URL}/api/v1`,
+      description: process.env.NODE_ENV === 'production' ? 'Production Server' : 'Development Server',
     },
   ],
   tags: [
