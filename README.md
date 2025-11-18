@@ -1,1 +1,1 @@
-# SyteMap-Stellar-Service
+# SyteMap-Stellar-Service all
