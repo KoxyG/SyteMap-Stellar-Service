@@ -87,35 +87,54 @@ export default (): Application => {
       // Create a dynamic handler that updates the server URL based on the request
       const swaggerUiHandler = (req: Request, res: Response, next: NextFunction) => {
         const serverUrl = getServerUrl(req);
-        const dynamicSwaggerDoc = {
-          ...swaggerDocument,
-          servers: [
-            {
-              url: `${serverUrl}/api/v1`,
-              description: process.env.NODE_ENV === 'production' ? 'Production Server' : 'Development Server',
-            },
-          ],
-        };
+        
+        // Create a fresh copy of the swagger document with updated server URL
+        const dynamicSwaggerDoc = JSON.parse(JSON.stringify(swaggerDocument));
+        dynamicSwaggerDoc.servers = [
+          {
+            url: `${serverUrl}/api/v1`,
+            description: process.env.NODE_ENV === 'production' ? 'Production Server' : 'Development Server',
+          },
+        ];
 
-        const handler = swaggerUi.setup(dynamicSwaggerDoc, {
+        // swaggerUi.setup returns an array of middleware functions
+        const handlers = swaggerUi.setup(dynamicSwaggerDoc, {
           customCss: '.swagger-ui .topbar { display: none }',
           swaggerOptions: {
             persistAuthorization: true,
             displayRequestDuration: true,
             filter: true,
             tryItOutEnabled: true,
+            url: undefined, // Don't use a URL, use the doc directly
+            spec: dynamicSwaggerDoc, // Pass the spec directly
           },
           customSiteTitle: 'API Documentation',
         });
 
-        // swaggerUi.setup returns a middleware function
-        return handler(req, res, next);
+        // Execute the first handler (which renders the UI)
+        if (Array.isArray(handlers)) {
+          return handlers[0](req, res, next);
+        }
+        return handlers(req, res, next);
       };
 
       // Serve Swagger UI at /docs - handle all sub-paths for client-side routing
       app.use('/docs', swaggerUi.serve);
       app.get('/docs', swaggerUiHandler);
       app.get('/docs/*', swaggerUiHandler);
+      
+      // Also serve the swagger JSON dynamically at /docs/swagger.json
+      app.get('/docs/swagger.json', (req: Request, res: Response) => {
+        const serverUrl = getServerUrl(req);
+        const dynamicSwaggerDoc = JSON.parse(JSON.stringify(swaggerDocument));
+        dynamicSwaggerDoc.servers = [
+          {
+            url: `${serverUrl}/api/v1`,
+            description: process.env.NODE_ENV === 'production' ? 'Production Server' : 'Development Server',
+          },
+        ];
+        res.json(dynamicSwaggerDoc);
+      });
     } else {
       app.get('/docs', (_req, res) =>
         res.status(503).json({
