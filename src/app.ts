@@ -60,14 +60,14 @@ export default (): Application => {
       : path.join(process.cwd(), 'src', 'swagger', 'documentation.swagger.json');
     if (fs.existsSync(swaggerDocumentPath)) {
       const swaggerDocument = JSON.parse(fs.readFileSync(swaggerDocumentPath, { encoding: 'utf-8' }));
-      
+
       // Dynamically update server URL based on current environment
       // This ensures the Swagger UI always shows the correct production URL
       const getServerUrl = (req: Request): string => {
         // Get the protocol and host from the request
         const protocol = req.get('x-forwarded-proto') || req.protocol || 'http';
         const host = req.get('x-forwarded-host') || req.get('host') || 'localhost:8000';
-        
+
         // Check environment variables first (most reliable)
         if (process.env.RENDER_EXTERNAL_URL) {
           return process.env.RENDER_EXTERNAL_URL;
@@ -75,11 +75,11 @@ export default (): Application => {
         if (process.env.VERCEL_URL) {
           return `https://${process.env.VERCEL_URL}`;
         }
-        
+
         // Use request-based URL (works in production with proxy headers)
         return `${protocol}://${host}`;
       };
-      
+
       // Create a dynamic handler that updates the server URL based on the request
       const swaggerUiHandler = (req: Request, res: Response, next: NextFunction) => {
         const serverUrl = getServerUrl(req);
@@ -92,7 +92,7 @@ export default (): Application => {
             },
           ],
         };
-        
+
         const handler = swaggerUi.setup(dynamicSwaggerDoc, {
           customCss: '.swagger-ui .topbar { display: none }',
           swaggerOptions: {
@@ -103,7 +103,7 @@ export default (): Application => {
           },
           customSiteTitle: 'API Documentation',
         });
-        
+
         // swaggerUi.setup returns a middleware function
         return handler(req, res, next);
       };
