@@ -30,7 +30,10 @@ if (cluster.isPrimary) {
   const expressApp = app();
   // start listening to requests
   // Bind to 0.0.0.0 to accept connections from all interfaces (required for Render/Docker)
-  const host = process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost';
+  // Check if PORT env var is set (Render/Heroku/Docker) or NODE_ENV is production
+  // Always use 0.0.0.0 if PORT is set, as it's a reliable indicator of cloud deployment
+  const isProduction = process.env.PORT || process.env.NODE_ENV === 'production';
+  const host = isProduction ? '0.0.0.0' : 'localhost';
   expressApp.listen(env.APP_PORT, host, () => {
     logger.info('=== SERVER STARTED ===');
     logger.info(`Server is up & running on http://${host}:${env.APP_PORT}`);
