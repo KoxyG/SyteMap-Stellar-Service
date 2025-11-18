@@ -87,9 +87,17 @@ export default (): Application => {
       // Create a dynamic handler that updates the server URL based on the request
       const swaggerUiHandler = (req: Request, res: Response, next: NextFunction) => {
         const serverUrl = getServerUrl(req);
-        
+
         // Create a fresh copy of the swagger document with updated server URL
+        // Deep clone to preserve all paths, tags, and other properties
         const dynamicSwaggerDoc = JSON.parse(JSON.stringify(swaggerDocument));
+        
+        // Ensure paths are preserved (they should be, but let's be explicit)
+        if (!dynamicSwaggerDoc.paths) {
+          dynamicSwaggerDoc.paths = swaggerDocument.paths;
+        }
+        
+        // Update server URL
         dynamicSwaggerDoc.servers = [
           {
             url: `${serverUrl}/api/v1`,
@@ -98,6 +106,7 @@ export default (): Application => {
         ];
 
         // swaggerUi.setup returns an array of middleware functions
+        // Pass the spec directly (not as a URL) to ensure all paths are displayed
         const handlers = swaggerUi.setup(dynamicSwaggerDoc, {
           customCss: '.swagger-ui .topbar { display: none }',
           swaggerOptions: {
@@ -105,8 +114,6 @@ export default (): Application => {
             displayRequestDuration: true,
             filter: true,
             tryItOutEnabled: true,
-            url: undefined, // Don't use a URL, use the doc directly
-            spec: dynamicSwaggerDoc, // Pass the spec directly
           },
           customSiteTitle: 'API Documentation',
         });
@@ -122,11 +129,18 @@ export default (): Application => {
       app.use('/docs', swaggerUi.serve);
       app.get('/docs', swaggerUiHandler);
       app.get('/docs/*', swaggerUiHandler);
-      
+
       // Also serve the swagger JSON dynamically at /docs/swagger.json
       app.get('/docs/swagger.json', (req: Request, res: Response) => {
         const serverUrl = getServerUrl(req);
+        // Deep clone to preserve all paths
         const dynamicSwaggerDoc = JSON.parse(JSON.stringify(swaggerDocument));
+        
+        // Ensure paths are preserved
+        if (!dynamicSwaggerDoc.paths) {
+          dynamicSwaggerDoc.paths = swaggerDocument.paths;
+        }
+        
         dynamicSwaggerDoc.servers = [
           {
             url: `${serverUrl}/api/v1`,
