@@ -48,7 +48,7 @@ export default (): Application => {
   const publicPath = path.join(process.cwd(), 'public');
   app.use(express.static(publicPath));
 
-  // swagger ui configuration
+  // swagger ui configuration commented out for now
   try {
     // Handle both dev (src/swagger) and production (dist/swagger) paths
     const swaggerDocPath = __dirname.includes('dist')
