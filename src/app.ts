@@ -44,12 +44,20 @@ export default (): Application => {
   app.use(helmet());
   // Disable fingerprinting
   app.disable('x-powered-by');
-  // set public folder for static files
-  app.use(express.static(__dirname?.replace('src', '') + 'public'));
+  // set public folder for static files (works in both dev and production)
+  const publicPath = path.join(process.cwd(), 'public');
+  app.use(express.static(publicPath));
 
   // swagger ui configuration
   try {
-    const swaggerDocumentPath = path.resolve(__dirname, 'swagger', 'documentation.swagger.json');
+    // Handle both dev (src/swagger) and production (dist/swagger) paths
+    const swaggerDocPath = __dirname.includes('dist')
+      ? path.join(__dirname, 'swagger', 'documentation.swagger.json')
+      : path.join(__dirname, 'swagger', 'documentation.swagger.json');
+    // Fallback to source location if not found in dist
+    const swaggerDocumentPath = fs.existsSync(swaggerDocPath)
+      ? swaggerDocPath
+      : path.join(process.cwd(), 'src', 'swagger', 'documentation.swagger.json');
     if (fs.existsSync(swaggerDocumentPath)) {
       const swaggerDocument = JSON.parse(fs.readFileSync(swaggerDocumentPath, { encoding: 'utf-8' }));
       const swaggerUiHandler = swaggerUi.setup(swaggerDocument, {
