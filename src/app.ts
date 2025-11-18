@@ -48,7 +48,7 @@ export default (): Application => {
   const publicPath = path.join(process.cwd(), 'public');
   app.use(express.static(publicPath));
 
-  // swagger ui configuration commented out for now
+  // swagger ui configuration
   try {
     // Handle both dev (src/swagger) and production (dist/swagger) paths
     const swaggerDocPath = __dirname.includes('dist')
@@ -60,16 +60,53 @@ export default (): Application => {
       : path.join(process.cwd(), 'src', 'swagger', 'documentation.swagger.json');
     if (fs.existsSync(swaggerDocumentPath)) {
       const swaggerDocument = JSON.parse(fs.readFileSync(swaggerDocumentPath, { encoding: 'utf-8' }));
-      const swaggerUiHandler = swaggerUi.setup(swaggerDocument, {
-        customCss: '.swagger-ui .topbar { display: none }',
-        swaggerOptions: {
-          persistAuthorization: true,
-          displayRequestDuration: true,
-          filter: true,
-          tryItOutEnabled: true,
-        },
-        customSiteTitle: 'API Documentation',
-      });
+      
+      // Dynamically update server URL based on current environment
+      // This ensures the Swagger UI always shows the correct production URL
+      const getServerUrl = (req: Request): string => {
+        // Get the protocol and host from the request
+        const protocol = req.get('x-forwarded-proto') || req.protocol || 'http';
+        const host = req.get('x-forwarded-host') || req.get('host') || 'localhost:8000';
+        
+        // Check environment variables first (most reliable)
+        if (process.env.RENDER_EXTERNAL_URL) {
+          return process.env.RENDER_EXTERNAL_URL;
+        }
+        if (process.env.VERCEL_URL) {
+          return `https://${process.env.VERCEL_URL}`;
+        }
+        
+        // Use request-based URL (works in production with proxy headers)
+        return `${protocol}://${host}`;
+      };
+      
+      // Create a dynamic handler that updates the server URL based on the request
+      const swaggerUiHandler = (req: Request, res: Response, next: NextFunction) => {
+        const serverUrl = getServerUrl(req);
+        const dynamicSwaggerDoc = {
+          ...swaggerDocument,
+          servers: [
+            {
+              url: `${serverUrl}/api/v1`,
+              description: process.env.NODE_ENV === 'production' ? 'Production Server' : 'Development Server',
+            },
+          ],
+        };
+        
+        const handler = swaggerUi.setup(dynamicSwaggerDoc, {
+          customCss: '.swagger-ui .topbar { display: none }',
+          swaggerOptions: {
+            persistAuthorization: true,
+            displayRequestDuration: true,
+            filter: true,
+            tryItOutEnabled: true,
+          },
+          customSiteTitle: 'API Documentation',
+        });
+        
+        // swaggerUi.setup returns a middleware function
+        return handler(req, res, next);
+      };
 
       // Serve Swagger UI at /docs - handle all sub-paths for client-side routing
       app.use('/docs', swaggerUi.serve);
