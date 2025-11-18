@@ -2,7 +2,7 @@
   "name": "sytemap-blockchain-backend",
   "version": "1.0.0",
   "main": "index.js",
-  "author": "Saviour O A <saviour.anyanwu@houseafrica.io>",
+  "author": "Progress ochuko Eyaadah - Koxy",
   "license": "MIT",
   "scripts": {
     "build": "yarn tsc",

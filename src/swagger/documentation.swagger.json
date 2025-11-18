@@ -20,9 +20,7 @@
   "paths": {
     "/create_stellar_account": {
       "post": {
-        "tags": [
-          "Stellar"
-        ],
+        "tags": ["Stellar"],
         "description": "",
         "operationId": "create_stellar_account",
         "responses": {
