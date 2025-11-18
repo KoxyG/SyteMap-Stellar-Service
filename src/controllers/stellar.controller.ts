@@ -4,7 +4,7 @@ import stellarService from '../stellar/stellar.service';
 
 class StellarController {
   /**
-   * POST 
+   * POST
    * Creates a new Stellar account and returns account details.
    */
   async createAccount(req: Request, res: Response, next: NextFunction): Promise<void> {

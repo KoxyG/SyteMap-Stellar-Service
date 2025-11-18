@@ -50,7 +50,6 @@ class StellarService {
     try {
       logger.debug(`${logContext} Starting account creation workflow`);
 
-     
       // Step 3: Validate environment variables
       if (!process.env.STELLAR_HORIZON_URL) {
         logger.error(`${logContext} Missing STELLAR_HORIZON_URL`);

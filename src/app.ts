@@ -72,7 +72,7 @@ export default (): Application => {
         res.status(503).json({
           status: 'error',
           message: 'Swagger documentation is not available yet. Please try again shortly.',
-        }),
+        })
       );
     }
   } catch (error) {
@@ -81,7 +81,7 @@ export default (): Application => {
       res.status(500).json({
         status: 'error',
         message: 'Unable to load Swagger documentation at the moment.',
-      }),
+      })
     );
   }
 

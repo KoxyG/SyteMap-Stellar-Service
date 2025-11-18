@@ -105,7 +105,9 @@ describe('StellarService.generateAndCreateAccount', () => {
     encryptionService.encryptSecretKey.mockResolvedValue('encrypted-secret');
 
     const stellarService = await loadService();
-    const addTrustlineSpy = jest.spyOn(stellarService as unknown as { addTrustline: jest.Mock }, 'addTrustline').mockResolvedValue(undefined);
+    const addTrustlineSpy = jest
+      .spyOn(stellarService as unknown as { addTrustline: jest.Mock }, 'addTrustline')
+      .mockResolvedValue(undefined);
     const result = await stellarService.generateAndCreateAccount();
 
     expect(result).toEqual({
