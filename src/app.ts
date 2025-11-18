@@ -91,12 +91,12 @@ export default (): Application => {
         // Create a fresh copy of the swagger document with updated server URL
         // Deep clone to preserve all paths, tags, and other properties
         const dynamicSwaggerDoc = JSON.parse(JSON.stringify(swaggerDocument));
-        
+
         // Ensure paths are preserved (they should be, but let's be explicit)
         if (!dynamicSwaggerDoc.paths) {
           dynamicSwaggerDoc.paths = swaggerDocument.paths;
         }
-        
+
         // Update server URL
         dynamicSwaggerDoc.servers = [
           {
@@ -127,10 +127,8 @@ export default (): Application => {
 
       // Serve Swagger UI at /docs - handle all sub-paths for client-side routing
       app.use('/docs', swaggerUi.serve);
-      app.get('/docs', swaggerUiHandler);
-      app.get('/docs/*', swaggerUiHandler);
-
-      // Also serve the swagger JSON dynamically at /docs/swagger.json
+      
+      // Serve the swagger JSON dynamically at /docs/swagger.json (MUST be before wildcard route)
       app.get('/docs/swagger.json', (req: Request, res: Response) => {
         const serverUrl = getServerUrl(req);
         // Deep clone to preserve all paths
@@ -149,6 +147,10 @@ export default (): Application => {
         ];
         res.json(dynamicSwaggerDoc);
       });
+      
+      // Handle Swagger UI routes (must be after specific routes)
+      app.get('/docs', swaggerUiHandler);
+      app.get('/docs/*', swaggerUiHandler);
     } else {
       app.get('/docs', (_req, res) =>
         res.status(503).json({
