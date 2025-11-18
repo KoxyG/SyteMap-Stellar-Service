@@ -16,6 +16,10 @@ import logger from './utils/logger.utils';
 export default (): Application => {
   const app: Application = express();
 
+  // Trust proxy - required when behind a proxy (Render, Heroku, etc.)
+  // This enables Express to trust X-Forwarded-* headers from the proxy
+  app.set('trust proxy', true);
+
   // Rate limiting configuration to prevent DDoS attacks
   const limiter = rateLimit({
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10), // 15 minutes default
