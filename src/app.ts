@@ -20,7 +20,9 @@ export default (): Application => {
   // Trust only the first proxy (the one directly in front of us) to prevent IP spoofing
   // This is more secure than trusting all proxies (trust proxy: true)
   // Value of 1 means trust the first proxy, which is Render's proxy in production
-  app.set('trust proxy', process.env.NODE_ENV === 'production' ? 1 : false);
+  // Check for PORT env var (set by Render/Heroku) as it's more reliable than NODE_ENV
+  const shouldTrustProxy = !!process.env.PORT || process.env.NODE_ENV === 'production';
+  app.set('trust proxy', shouldTrustProxy ? 1 : false);
 
   // Rate limiting configuration to prevent DDoS attacks
   const limiter = rateLimit({
