@@ -55,16 +55,20 @@ export default (): Application => {
   // swagger ui configuration
   try {
     // Handle both dev (src/swagger) and production (dist/swagger) paths
-    const swaggerDocPath = __dirname.includes('dist')
-      ? path.join(__dirname, 'swagger', 'documentation.swagger.json')
-      : path.join(__dirname, 'swagger', 'documentation.swagger.json');
-    // Fallback to source location if not found in dist
+    // In production: __dirname is dist/app, so we need dist/swagger
+    // In dev: __dirname is src/app, so we need src/swagger
+    const isProduction = __dirname.includes('dist');
+    const swaggerDocPath = isProduction
+      ? path.join(process.cwd(), 'dist', 'swagger', 'documentation.swagger.json')
+      : path.join(__dirname, '..', 'swagger', 'documentation.swagger.json');
+    
+    // Fallback to source location if not found
     const swaggerDocumentPath = fs.existsSync(swaggerDocPath)
       ? swaggerDocPath
       : path.join(process.cwd(), 'src', 'swagger', 'documentation.swagger.json');
     if (fs.existsSync(swaggerDocumentPath)) {
       const swaggerDocument = JSON.parse(fs.readFileSync(swaggerDocumentPath, { encoding: 'utf-8' }));
-      
+
       // Log for debugging - verify paths exist
       const pathKeys = swaggerDocument.paths ? Object.keys(swaggerDocument.paths) : [];
       logger.info(`Swagger document loaded from: ${swaggerDocumentPath}`);
@@ -96,17 +100,21 @@ export default (): Application => {
         // Create a fresh copy of the swagger document with updated server URL
         // Deep clone to preserve all paths, tags, and other properties
         const dynamicSwaggerDoc = JSON.parse(JSON.stringify(swaggerDocument));
-        
+
         // Ensure paths are preserved (they should be, but let's be explicit)
         if (!dynamicSwaggerDoc.paths || Object.keys(dynamicSwaggerDoc.paths).length === 0) {
           dynamicSwaggerDoc.paths = swaggerDocument.paths || {};
-          logger.warn(`Swagger paths missing in clone, restoring from original. Paths: ${Object.keys(dynamicSwaggerDoc.paths).join(', ')}`);
+          logger.warn(
+            `Swagger paths missing in clone, restoring from original. Paths: ${Object.keys(dynamicSwaggerDoc.paths).join(', ')}`
+          );
         }
-        
+
         // Verify paths exist before serving
         const dynamicPathKeys = Object.keys(dynamicSwaggerDoc.paths || {});
         if (dynamicPathKeys.length === 0) {
-          logger.error('Swagger document has no paths! Original paths: ' + Object.keys(swaggerDocument.paths || {}).join(', '));
+          logger.error(
+            'Swagger document has no paths! Original paths: ' + Object.keys(swaggerDocument.paths || {}).join(', ')
+          );
         }
 
         // Update server URL
@@ -150,7 +158,9 @@ export default (): Application => {
         // Ensure paths are preserved
         if (!dynamicSwaggerDoc.paths || Object.keys(dynamicSwaggerDoc.paths).length === 0) {
           dynamicSwaggerDoc.paths = swaggerDocument.paths || {};
-          logger.warn(`Swagger paths missing in JSON endpoint, restoring. Paths: ${Object.keys(dynamicSwaggerDoc.paths).join(', ')}`);
+          logger.warn(
+            `Swagger paths missing in JSON endpoint, restoring. Paths: ${Object.keys(dynamicSwaggerDoc.paths).join(', ')}`
+          );
         }
 
         dynamicSwaggerDoc.servers = [
@@ -159,11 +169,13 @@ export default (): Application => {
             description: process.env.NODE_ENV === 'production' ? 'Production Server' : 'Development Server',
           },
         ];
-        
+
         // Log for debugging
         const pathCount = Object.keys(dynamicSwaggerDoc.paths || {}).length;
-        logger.debug(`Serving swagger.json with ${pathCount} paths: ${Object.keys(dynamicSwaggerDoc.paths || {}).join(', ')}`);
-        
+        logger.debug(
+          `Serving swagger.json with ${pathCount} paths: ${Object.keys(dynamicSwaggerDoc.paths || {}).join(', ')}`
+        );
+
         res.json(dynamicSwaggerDoc);
       });
 
