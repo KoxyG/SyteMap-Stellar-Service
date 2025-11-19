@@ -1,19 +1,36 @@
 import { NextFunction, Request, Response } from 'express';
 
 import CustomError from '../utils/customError.utils';
+import { HttpException } from '../exceptions/http.exception';
 import logger from '../utils/logger.utils';
 import appConfig from '../config/app.config';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const globalErrorHandler = (err: Error | CustomError, req: Request, res: Response, next: NextFunction) => {
+const globalErrorHandler = (err: Error | CustomError | HttpException, req: Request, res: Response, next: NextFunction) => {
   // Default error response
   let statusCode = 500;
   let message = 'An unexpected error occurred';
   let userFriendlyMessage = 'Something went wrong. Please try again later.';
+  let errorCode: string | undefined;
+  let retryable = false;
+  let retryAfter: number | undefined;
+  let details: string | undefined;
   const isProduction = appConfig.NODE_ENV === 'production';
 
-  // Custom error handling
-  if (err instanceof CustomError) {
+  // HttpException handling (from services)
+  if (err instanceof HttpException) {
+    statusCode = err.status;
+    message = err.response.message;
+    userFriendlyMessage = err.response.message;
+    errorCode = err.response.errorCode;
+    retryable = err.response.retryable ?? false;
+    retryAfter = err.response.retryAfter;
+    details = err.response.details;
+
+    logger.error(
+      `HttpException: ${message} | Code: ${errorCode || 'N/A'} | Retryable: ${retryable} | Path: ${req.path} | Method: ${req.method}`
+    );
+  } else if (err instanceof CustomError) {
     // Operational error (e.g., missing parameters)
     statusCode = err.statusCode || 400;
     message = err.message || 'An operational error occurred';
@@ -54,17 +71,37 @@ const globalErrorHandler = (err: Error | CustomError, req: Request, res: Respons
 
   // Response object structure
   const errorResponse: {
-    status: string;
+    success: boolean;
+    status: number;
     message: string;
-    detail: string;
+    errorCode?: string;
+    retryable?: boolean;
+    retryAfter?: number;
+    details?: string;
     stack?: string;
     path?: string;
     timestamp?: string;
   } = {
-    status: 'error',
+    success: false,
+    status: statusCode,
     message: isProduction ? userFriendlyMessage : message,
-    detail: userFriendlyMessage,
   };
+
+  // Add retry information if available
+  if (errorCode) {
+    errorResponse.errorCode = errorCode;
+  }
+  if (retryable !== undefined) {
+    errorResponse.retryable = retryable;
+  }
+  if (retryAfter !== undefined) {
+    errorResponse.retryAfter = retryAfter;
+    // Also set Retry-After header for HTTP compliance
+    res.setHeader('Retry-After', retryAfter.toString());
+  }
+  if (details) {
+    errorResponse.details = details;
+  }
 
   // Only include stack trace in development mode
   if (!isProduction) {

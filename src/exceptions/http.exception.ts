@@ -1,6 +1,6 @@
 /**
  * HTTP Exception
- * Custom exception class for HTTP errors
+ * Custom exception class for HTTP errors with retry support
  */
 export class HttpException extends Error {
   public status: number;
@@ -8,6 +8,10 @@ export class HttpException extends Error {
     status: number;
     success: boolean;
     message: string;
+    errorCode?: string;
+    retryable?: boolean;
+    retryAfter?: number; // seconds
+    details?: string;
   };
 
   constructor(
@@ -15,6 +19,10 @@ export class HttpException extends Error {
       status: number;
       success: boolean;
       message: string;
+      errorCode?: string;
+      retryable?: boolean;
+      retryAfter?: number;
+      details?: string;
     },
     status: number
   ) {

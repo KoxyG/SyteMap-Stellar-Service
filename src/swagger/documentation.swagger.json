@@ -94,11 +94,28 @@
         "tags": [
           "Stellar"
         ],
-        "description": "",
+        "description": "Generate a mnemonic phrase, derive a keypair from it, create a new Stellar account, and return account details including the mnemonic",
         "operationId": "create_stellar_account",
         "responses": {
           "201": {
             "description": "Created"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        },
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "accountIndex": {
+                    "example": "any"
+                  }
+                }
+              }
+            }
           }
         }
       }

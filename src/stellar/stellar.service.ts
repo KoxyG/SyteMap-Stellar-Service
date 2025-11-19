@@ -1,4 +1,5 @@
 import { Asset, Keypair, Horizon, BASE_FEE, Networks, Operation, TransactionBuilder } from '@stellar/stellar-sdk';
+import StellarHDWallet from 'stellar-hd-wallet';
 import encryptionService from '../encryption/encryption.service';
 
 import { HttpException } from '../exceptions/http.exception';
@@ -27,25 +28,62 @@ class StellarService {
   private readonly encryptionService = encryptionService;
 
   /**
-   * Generate a random wallet, create the account on Stellar network,
+   * Generate a mnemonic phrase, derive a keypair from it, create the account on Stellar network,
    * and automatically add a trustline for the new wallet.
-   * @returns Object with publicKey, encrypted secret, transaction info, and trustline status
+   * @param accountIndex - Optional account index for HD wallet derivation (default: 0)
+   * @returns Object with mnemonic, publicKey, encrypted secret, transaction info, and trustline status
    * @throws Error if wallet generation, account creation, or trustline setup fails
    */
-  async generateAndCreateAccount(): Promise<{
+  async generateAndCreateAccount(accountIndex: number = 0): Promise<{
+    mnemonic: string;
     publicKey: string;
     encryptedSecret: string;
     transactionHash: string;
     trustlineAdded: boolean;
   }> {
     const logContext = '[StellarService.generateAndCreateAccount]';
-    // Step 1: Generate random keypair
-    const keypair = Keypair.random();
-    const secretKey = keypair.secret();
-    const publicKey = keypair.publicKey();
+    
+    // Step 1: Generate mnemonic phrase
+    let mnemonic: string;
+    let keypair: Keypair;
+    let secretKey: string;
+    let publicKey: string;
+    
+    try {
+      logger.debug(`${logContext} Generating mnemonic phrase`);
+      
+      // Generate a mnemonic (12 or 24 words)
+      mnemonic = StellarHDWallet.generateMnemonic();
+      
+      // Derive a keypair from the mnemonic (using default path m/44'/148'/0')
+      const wallet = StellarHDWallet.fromMnemonic(mnemonic);
+      keypair = wallet.getKeypair(accountIndex);
+      
+      // Get public and secret keys
+      publicKey = keypair.publicKey();
+      secretKey = keypair.secret();
+      
+      logger.debug(`${logContext} Generated mnemonic and keypair for public key ${publicKey}, account index ${accountIndex}`);
+    } catch (error) {
+      logger.error(
+        `${logContext} Failed to generate mnemonic: ${error instanceof Error ? error.message : error}`
+      );
+      
+      throw new HttpException(
+        {
+          status: 500,
+          success: false,
+          message: 'Failed to generate mnemonic',
+          errorCode: 'MNEMONIC_GENERATION_FAILED',
+          retryable: true,
+          retryAfter: 2,
+          details: 'Failed to generate mnemonic phrase. Please retry the request.',
+        },
+        500
+      );
+    }
     let transactionHash = '';
     let trustlineAdded = false;
-    logger.debug(`${logContext} Generated keypair for public key ${publicKey}`);
 
     try {
       logger.debug(`${logContext} Starting account creation workflow`);
@@ -58,6 +96,9 @@ class StellarService {
             status: 500,
             success: false,
             message: 'STELLAR_HORIZON_URL not configured',
+            errorCode: 'CONFIG_MISSING_HORIZON_URL',
+            retryable: false,
+            details: 'Server configuration error. Please contact support.',
           },
           500
         );
@@ -71,6 +112,9 @@ class StellarService {
             status: 500,
             success: false,
             message: 'SPONSOR_PUBLIC_KEY not configured',
+            errorCode: 'CONFIG_MISSING_SPONSOR_KEY',
+            retryable: false,
+            details: 'Server configuration error. Please contact support.',
           },
           500
         );
@@ -83,6 +127,9 @@ class StellarService {
             status: 500,
             success: false,
             message: 'SPONSOR_PRIVATE_KEY not configured',
+            errorCode: 'CONFIG_MISSING_SPONSOR_SECRET',
+            retryable: false,
+            details: 'Server configuration error. Please contact support.',
           },
           500
         );
@@ -143,6 +190,9 @@ class StellarService {
               status: 400,
               success: false,
               message: 'Sponsor account has insufficient funds',
+              errorCode: 'STELLAR_INSUFFICIENT_FUNDS',
+              retryable: false,
+              details: 'The sponsor account does not have enough funds to create the account. This is a permanent error.',
             },
             400
           );
@@ -152,6 +202,10 @@ class StellarService {
               status: 503,
               success: false,
               message: 'Service temporarily unavailable, please try again',
+              errorCode: 'STELLAR_SEQUENCE_ERROR',
+              retryable: true,
+              retryAfter: 5,
+              details: 'The Stellar network is experiencing high load. Please retry after a few seconds.',
             },
             503
           );
@@ -161,8 +215,37 @@ class StellarService {
               status: 409,
               success: false,
               message: 'Account already exists',
+              errorCode: 'STELLAR_ACCOUNT_EXISTS',
+              retryable: false,
+              details: 'An account with this public key already exists on the Stellar network.',
             },
             409
+          );
+        } else if (error.message.includes('timeout') || error.message.includes('TIMEOUT')) {
+          throw new HttpException(
+            {
+              status: 504,
+              success: false,
+              message: 'Request timeout - Stellar network did not respond in time',
+              errorCode: 'STELLAR_TIMEOUT',
+              retryable: true,
+              retryAfter: 10,
+              details: 'The request to the Stellar network timed out. Please retry the request.',
+            },
+            504
+          );
+        } else if (error.message.includes('network') || error.message.includes('connection')) {
+          throw new HttpException(
+            {
+              status: 503,
+              success: false,
+              message: 'Network error - unable to connect to Stellar network',
+              errorCode: 'STELLAR_NETWORK_ERROR',
+              retryable: true,
+              retryAfter: 15,
+              details: 'Unable to connect to the Stellar network. Please retry after a few seconds.',
+            },
+            503
           );
         }
       }
@@ -172,6 +255,10 @@ class StellarService {
           status: 500,
           success: false,
           message: 'Failed to generate and create account',
+          errorCode: 'STELLAR_ACCOUNT_CREATION_FAILED',
+          retryable: true,
+          retryAfter: 5,
+          details: 'An unexpected error occurred while creating the account. Please retry the request.',
         },
         500
       );
@@ -194,6 +281,10 @@ class StellarService {
           status: 500,
           success: false,
           message: 'Failed to add trustline after account creation',
+          errorCode: 'TRUSTLINE_SETUP_FAILED',
+          retryable: true,
+          retryAfter: 5,
+          details: 'Account was created but trustline setup failed. You may need to add the trustline manually or retry.',
         },
         500
       );
@@ -203,6 +294,7 @@ class StellarService {
     logger.debug(`${logContext} Secret key encrypted for ${publicKey}`);
 
     return {
+      mnemonic,
       publicKey,
       encryptedSecret,
       transactionHash,
@@ -233,6 +325,9 @@ class StellarService {
           status: 501,
           success: false,
           message: 'Database integration not implemented yet',
+          errorCode: 'FEATURE_NOT_IMPLEMENTED',
+          retryable: false,
+          details: 'This feature is not yet implemented. Please contact support.',
         },
         501
       );
@@ -263,6 +358,10 @@ class StellarService {
           status: 500,
           success: false,
           message: 'Failed to retrieve secret key',
+          errorCode: 'SECRET_KEY_RETRIEVAL_FAILED',
+          retryable: true,
+          retryAfter: 3,
+          details: 'An error occurred while retrieving the secret key. Please retry the request.',
         },
         500
       );
@@ -285,6 +384,9 @@ class StellarService {
           status: 400,
           success: false,
           message: 'Public key and secret key are required',
+          errorCode: 'TRUSTLINE_MISSING_CREDENTIALS',
+          retryable: false,
+          details: 'Both public key and secret key must be provided to add a trustline.',
         },
         400
       );
@@ -299,6 +401,9 @@ class StellarService {
             status: 500,
             success: false,
             message: 'SPONSOR_PRIVATE_KEY not configured',
+            errorCode: 'CONFIG_MISSING_SPONSOR_SECRET',
+            retryable: false,
+            details: 'Server configuration error. Please contact support.',
           },
           500
         );
@@ -311,6 +416,9 @@ class StellarService {
             status: 500,
             success: false,
             message: 'STELLAR_HORIZON_URL not configured',
+            errorCode: 'CONFIG_MISSING_HORIZON_URL',
+            retryable: false,
+            details: 'Server configuration error. Please contact support.',
           },
           500
         );
@@ -323,6 +431,9 @@ class StellarService {
             status: 500,
             success: false,
             message: 'SYTE_ASSET_CODE not configured',
+            errorCode: 'CONFIG_MISSING_ASSET_CODE',
+            retryable: false,
+            details: 'Server configuration error. Please contact support.',
           },
           500
         );
@@ -335,6 +446,9 @@ class StellarService {
             status: 500,
             success: false,
             message: 'SYTE_ASSET_ISSUER not configured',
+            errorCode: 'CONFIG_MISSING_ISSUER_ADDRESS',
+            retryable: false,
+            details: 'Server configuration error. Please contact support.',
           },
           500
         );
@@ -348,6 +462,9 @@ class StellarService {
             status: 500,
             success: false,
             message: 'SPONSOR_PUBLIC_KEY not configured',
+            errorCode: 'CONFIG_MISSING_SPONSOR_KEY',
+            retryable: false,
+            details: 'Server configuration error. Please contact support.',
           },
           500
         );
@@ -407,6 +524,9 @@ class StellarService {
               status: 400,
               success: false,
               message: 'Sponsor account has insufficient funds',
+              errorCode: 'STELLAR_INSUFFICIENT_FUNDS',
+              retryable: false,
+              details: 'The sponsor account does not have enough funds to add the trustline. This is a permanent error.',
             },
             400
           );
@@ -416,6 +536,10 @@ class StellarService {
               status: 503,
               success: false,
               message: 'Service temporarily unavailable, please try again',
+              errorCode: 'STELLAR_SEQUENCE_ERROR',
+              retryable: true,
+              retryAfter: 5,
+              details: 'The Stellar network is experiencing high load. Please retry after a few seconds.',
             },
             503
           );
@@ -425,8 +549,37 @@ class StellarService {
               status: 400,
               success: false,
               message: 'Trustline operation failed',
+              errorCode: 'STELLAR_TRUSTLINE_FAILED',
+              retryable: false,
+              details: 'The trustline operation failed. This may indicate an issue with the account or asset configuration.',
             },
             400
+          );
+        } else if (error.message.includes('timeout') || error.message.includes('TIMEOUT')) {
+          throw new HttpException(
+            {
+              status: 504,
+              success: false,
+              message: 'Request timeout - Stellar network did not respond in time',
+              errorCode: 'STELLAR_TIMEOUT',
+              retryable: true,
+              retryAfter: 10,
+              details: 'The request to the Stellar network timed out. Please retry the request.',
+            },
+            504
+          );
+        } else if (error.message.includes('network') || error.message.includes('connection')) {
+          throw new HttpException(
+            {
+              status: 503,
+              success: false,
+              message: 'Network error - unable to connect to Stellar network',
+              errorCode: 'STELLAR_NETWORK_ERROR',
+              retryable: true,
+              retryAfter: 15,
+              details: 'Unable to connect to the Stellar network. Please retry after a few seconds.',
+            },
+            503
           );
         }
       }
@@ -436,6 +589,10 @@ class StellarService {
           status: 500,
           success: false,
           message: 'Failed to add trustline',
+          errorCode: 'TRUSTLINE_ADDITION_FAILED',
+          retryable: true,
+          retryAfter: 5,
+          details: 'An unexpected error occurred while adding the trustline. Please retry the request.',
         },
         500
       );
