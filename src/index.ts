@@ -1,29 +1,37 @@
 import cluster from 'cluster';
+import fs from 'fs';
+import path from 'path';
 
 import env from './config/app.config';
 import app from './app';
 import logger from './utils/logger.utils';
 
 if (cluster.isPrimary) {
-  // generate swagger documentation - wait for it to complete before starting workers
-  // This ensures the swagger file exists when workers try to load it
-  (async function () {
-    try {
-      // Import and await the swagger generation promise
-      const swaggerPromise = await import('./swagger/swagger');
-      // The default export is the promise, await it
-      await swaggerPromise.default;
-      logger.info('Swagger documentation generation completed, starting workers...');
-    } catch (error) {
-      logger.error(`Failed to generate swagger documentation: ${error}`);
-    }
-    
-    // TODO: style recommendation: set below statement background color green and foreground color black
-    // TODO: add teminal bell when server starts
-    logger.info(`Primary Process Starting ${env.NUMBER_OF_WORKERS} Workers!`);
+  // Swagger documentation should be generated at build time (see package.json build script)
+  // At runtime, we just verify the swagger file exists and use it
+  // This avoids runtime generation issues with compiled JS files
+  const swaggerPath = path.join(__dirname, 'swagger', 'documentation.swagger.json');
+  if (!fs.existsSync(swaggerPath)) {
+    logger.warn(`Swagger file not found at ${swaggerPath}. Generating at runtime...`);
+    // Fallback: generate at runtime if not found
+    (async function () {
+      try {
+        const swaggerPromise = await import('./swagger/swagger');
+        await swaggerPromise.default;
+        logger.info('Runtime swagger generation completed');
+      } catch (error) {
+        logger.error(`Failed to generate swagger documentation: ${error}`);
+      }
+    })();
+  } else {
+    logger.info(`Swagger documentation found at: ${swaggerPath}`);
+  }
 
-    for (let worker = 1; worker <= env.NUMBER_OF_WORKERS; worker++) cluster.fork();
-  })();
+  // TODO: style recommendation: set below statement background color green and foreground color black
+  // TODO: add teminal bell when server starts
+  logger.info(`Primary Process Starting ${env.NUMBER_OF_WORKERS} Workers!`);
+
+  for (let worker = 1; worker <= env.NUMBER_OF_WORKERS; worker++) cluster.fork();
 
   // when a worker starts
   cluster.on('online', (workerInfo) => logger.info(`Worker with Process ${workerInfo.process.pid} Started!`));

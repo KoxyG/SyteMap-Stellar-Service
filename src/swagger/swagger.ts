@@ -27,25 +27,14 @@ const documentConfiguration = {
 };
 
 export const outputFile = path.resolve(__dirname, 'documentation.swagger.json');
-// swagger-autogen needs to scan all route files, not just index
-// The index file just imports/mounts other routes, but swagger comments are in the individual route files
-const isProduction = __dirname.includes('dist');
-const routesDir = isProduction
-  ? path.resolve(__dirname, '../routes')
-  : path.resolve(__dirname, '../routes');
+// swagger-autogen needs to scan route files with swagger comments
+// Use source TypeScript files (works better than compiled JS for swagger-autogen)
+// The index file combines all routes, but swagger comments are in individual route files
+const routesDir = path.resolve(__dirname, '../routes');
 
-// List all route files - swagger-autogen will scan all of them
-const routes = isProduction
-  ? [
-      path.resolve(routesDir, 'default.routes.js'),
-      path.resolve(routesDir, 'stellar.routes.js'),
-      path.resolve(routesDir, 'errorTest.routes.js'),
-    ]
-  : [
-      path.resolve(routesDir, 'default.routes'),
-      path.resolve(routesDir, 'stellar.routes'),
-      path.resolve(routesDir, 'errorTest.routes'),
-    ];
+// Use source TypeScript files - swagger-autogen can parse these better
+// Pass index.ts which combines all routes, swagger-autogen will follow imports
+const routes = [path.resolve(routesDir, 'index.ts')];
 
 // Generate swagger documentation and wait for completion
 // This ensures the file is fully written before workers try to read it

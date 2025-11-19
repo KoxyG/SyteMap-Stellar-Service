@@ -5,7 +5,8 @@
   "author": "Progress ochuko Eyaadah - Koxy",
   "license": "MIT",
   "scripts": {
-    "build": "tsc && npm run build:copy",
+    "build": "npm run swagger && tsc && npm run build:copy",
+    "swagger": "ts-node ./src/swagger/swagger.ts",
     "build:copy": "mkdir -p dist/public && cp -r public/* dist/public/ 2>/dev/null || true && mkdir -p dist/swagger && cp -r src/swagger/*.json dist/swagger/ 2>/dev/null || true",
     "start": "node dist/index.js",
     "dev": "nodemon --config nodemon.json",
@@ -17,7 +18,6 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "swagger": "ts-node ./src/swagger/swagger.ts",
     "generate:key": "ts-node scripts/generate-encryption-key.ts"
   },
   "dependencies": {
