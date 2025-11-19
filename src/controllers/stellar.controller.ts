@@ -10,17 +10,7 @@ class StellarController {
    */
   async createAccount(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const accountIndex = req.body.accountIndex !== undefined ? Number(req.body.accountIndex) : 0;
-      
-      if (isNaN(accountIndex) || accountIndex < 0) {
-        res.status(400).json({
-          success: false,
-          message: 'accountIndex must be a non-negative number',
-        });
-        return;
-      }
-
-      const result = await stellarService.generateAndCreateAccount(accountIndex);
+      const result = await stellarService.generateAndCreateAccount();
       res.status(201).json({
         success: true,
         data: result,

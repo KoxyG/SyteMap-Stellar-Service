@@ -6,7 +6,12 @@ import logger from '../utils/logger.utils';
 import appConfig from '../config/app.config';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const globalErrorHandler = (err: Error | CustomError | HttpException, req: Request, res: Response, next: NextFunction) => {
+const globalErrorHandler = (
+  err: Error | CustomError | HttpException,
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   // Default error response
   let statusCode = 500;
   let message = 'An unexpected error occurred';

@@ -99,23 +99,6 @@
         "responses": {
           "201": {
             "description": "Created"
-          },
-          "400": {
-            "description": "Bad Request"
-          }
-        },
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "accountIndex": {
-                    "example": "any"
-                  }
-                }
-              }
-            }
           }
         }
       }

@@ -30,11 +30,10 @@ class StellarService {
   /**
    * Generate a mnemonic phrase, derive a keypair from it, create the account on Stellar network,
    * and automatically add a trustline for the new wallet.
-   * @param accountIndex - Optional account index for HD wallet derivation (default: 0)
    * @returns Object with mnemonic, publicKey, encrypted secret, transaction info, and trustline status
    * @throws Error if wallet generation, account creation, or trustline setup fails
    */
-  async generateAndCreateAccount(accountIndex: number = 0): Promise<{
+  async generateAndCreateAccount(): Promise<{
     mnemonic: string;
     publicKey: string;
     encryptedSecret: string;
@@ -42,33 +41,33 @@ class StellarService {
     trustlineAdded: boolean;
   }> {
     const logContext = '[StellarService.generateAndCreateAccount]';
-    
+
     // Step 1: Generate mnemonic phrase
     let mnemonic: string;
     let keypair: Keypair;
     let secretKey: string;
     let publicKey: string;
-    
+
     try {
       logger.debug(`${logContext} Generating mnemonic phrase`);
-      
+
       // Generate a mnemonic (12 or 24 words)
       mnemonic = StellarHDWallet.generateMnemonic();
-      
+
       // Derive a keypair from the mnemonic (using default path m/44'/148'/0')
       const wallet = StellarHDWallet.fromMnemonic(mnemonic);
-      keypair = wallet.getKeypair(accountIndex);
-      
+      keypair = wallet.getKeypair(0);
+
       // Get public and secret keys
       publicKey = keypair.publicKey();
       secretKey = keypair.secret();
-      
-      logger.debug(`${logContext} Generated mnemonic and keypair for public key ${publicKey}, account index ${accountIndex}`);
-    } catch (error) {
-      logger.error(
-        `${logContext} Failed to generate mnemonic: ${error instanceof Error ? error.message : error}`
+
+      logger.debug(
+        `${logContext} Generated mnemonic and keypair for public key ${publicKey}, account index 0`
       );
-      
+    } catch (error) {
+      logger.error(`${logContext} Failed to generate mnemonic: ${error instanceof Error ? error.message : error}`);
+
       throw new HttpException(
         {
           status: 500,
@@ -192,7 +191,8 @@ class StellarService {
               message: 'Sponsor account has insufficient funds',
               errorCode: 'STELLAR_INSUFFICIENT_FUNDS',
               retryable: false,
-              details: 'The sponsor account does not have enough funds to create the account. This is a permanent error.',
+              details:
+                'The sponsor account does not have enough funds to create the account. This is a permanent error.',
             },
             400
           );
@@ -284,7 +284,8 @@ class StellarService {
           errorCode: 'TRUSTLINE_SETUP_FAILED',
           retryable: true,
           retryAfter: 5,
-          details: 'Account was created but trustline setup failed. You may need to add the trustline manually or retry.',
+          details:
+            'Account was created but trustline setup failed. You may need to add the trustline manually or retry.',
         },
         500
       );
@@ -526,7 +527,8 @@ class StellarService {
               message: 'Sponsor account has insufficient funds',
               errorCode: 'STELLAR_INSUFFICIENT_FUNDS',
               retryable: false,
-              details: 'The sponsor account does not have enough funds to add the trustline. This is a permanent error.',
+              details:
+                'The sponsor account does not have enough funds to add the trustline. This is a permanent error.',
             },
             400
           );
@@ -551,7 +553,8 @@ class StellarService {
               message: 'Trustline operation failed',
               errorCode: 'STELLAR_TRUSTLINE_FAILED',
               retryable: false,
-              details: 'The trustline operation failed. This may indicate an issue with the account or asset configuration.',
+              details:
+                'The trustline operation failed. This may indicate an issue with the account or asset configuration.',
             },
             400
           );
