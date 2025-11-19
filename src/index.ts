@@ -5,16 +5,25 @@ import app from './app';
 import logger from './utils/logger.utils';
 
 if (cluster.isPrimary) {
-  // generate swagger documentation
+  // generate swagger documentation - wait for it to complete before starting workers
+  // This ensures the swagger file exists when workers try to load it
   (async function () {
-    await import('./swagger/swagger');
+    try {
+      // Import and await the swagger generation promise
+      const swaggerPromise = await import('./swagger/swagger');
+      // The default export is the promise, await it
+      await swaggerPromise.default;
+      logger.info('Swagger documentation generation completed, starting workers...');
+    } catch (error) {
+      logger.error(`Failed to generate swagger documentation: ${error}`);
+    }
+    
+    // TODO: style recommendation: set below statement background color green and foreground color black
+    // TODO: add teminal bell when server starts
+    logger.info(`Primary Process Starting ${env.NUMBER_OF_WORKERS} Workers!`);
+
+    for (let worker = 1; worker <= env.NUMBER_OF_WORKERS; worker++) cluster.fork();
   })();
-
-  // TODO: style recommendation: set below statement background color green and foreground color black
-  // TODO: add teminal bell when server starts
-  logger.info(`Primary Process Starting ${env.NUMBER_OF_WORKERS} Workers!`);
-
-  for (let worker = 1; worker <= env.NUMBER_OF_WORKERS; worker++) cluster.fork();
 
   // when a worker starts
   cluster.on('online', (workerInfo) => logger.info(`Worker with Process ${workerInfo.process.pid} Started!`));

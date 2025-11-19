@@ -17,8 +17,10 @@ export default (): Application => {
   const app: Application = express();
 
   // Trust proxy - required when behind a proxy (Render, Heroku, etc.)
-  // This enables Express to trust X-Forwarded-* headers from the proxy
-  app.set('trust proxy', true);
+  // Trust only the first proxy (the one directly in front of us) to prevent IP spoofing
+  // This is more secure than trusting all proxies (trust proxy: true)
+  // Value of 1 means trust the first proxy, which is Render's proxy in production
+  app.set('trust proxy', process.env.NODE_ENV === 'production' ? 1 : false);
 
   // Rate limiting configuration to prevent DDoS attacks
   const limiter = rateLimit({
@@ -61,18 +63,39 @@ export default (): Application => {
     const swaggerDocPath = isProduction
       ? path.join(process.cwd(), 'dist', 'swagger', 'documentation.swagger.json')
       : path.join(__dirname, '..', 'swagger', 'documentation.swagger.json');
+
+    // Fallback locations - try multiple paths to find a valid swagger file
+    let swaggerDocumentPath = swaggerDocPath;
+    if (!fs.existsSync(swaggerDocumentPath)) {
+      // Try source location
+      swaggerDocumentPath = path.join(process.cwd(), 'src', 'swagger', 'documentation.swagger.json');
+    }
+    if (!fs.existsSync(swaggerDocumentPath)) {
+      // Try build-copied location (if build copy happened before generation)
+      const buildCopiedPath = path.join(process.cwd(), 'dist', 'swagger', 'documentation.swagger.json');
+      if (fs.existsSync(buildCopiedPath)) {
+        swaggerDocumentPath = buildCopiedPath;
+      }
+    }
     
-    // Fallback to source location if not found
-    const swaggerDocumentPath = fs.existsSync(swaggerDocPath)
-      ? swaggerDocPath
-      : path.join(process.cwd(), 'src', 'swagger', 'documentation.swagger.json');
     if (fs.existsSync(swaggerDocumentPath)) {
-      const swaggerDocument = JSON.parse(fs.readFileSync(swaggerDocumentPath, { encoding: 'utf-8' }));
+      let swaggerDocument: any;
+      try {
+        swaggerDocument = JSON.parse(fs.readFileSync(swaggerDocumentPath, { encoding: 'utf-8' }));
+      } catch (parseError) {
+        logger.error(`Failed to parse swagger document from ${swaggerDocumentPath}: ${parseError}`);
+        throw parseError;
+      }
 
       // Log for debugging - verify paths exist
       const pathKeys = swaggerDocument.paths ? Object.keys(swaggerDocument.paths) : [];
       logger.info(`Swagger document loaded from: ${swaggerDocumentPath}`);
       logger.info(`Swagger paths found: ${pathKeys.length} - ${pathKeys.join(', ')}`);
+      
+      // Warn if no paths found - this shouldn't happen
+      if (pathKeys.length === 0) {
+        logger.error(`WARNING: Swagger document has no paths! File size: ${fs.statSync(swaggerDocumentPath).size} bytes`);
+      }
 
       // Dynamically update server URL based on current environment
       // This ensures the Swagger UI always shows the correct production URL

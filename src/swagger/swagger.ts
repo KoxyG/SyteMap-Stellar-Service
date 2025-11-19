@@ -1,3 +1,4 @@
+import fs from 'fs';
 import path from 'path';
 import swaggerAutogen from 'swagger-autogen';
 
@@ -26,8 +27,40 @@ const documentConfiguration = {
 };
 
 export const outputFile = path.resolve(__dirname, 'documentation.swagger.json');
-export const routes = [path.resolve(__dirname, '../routes/index')];
+// Use .js extension for compiled routes - swagger-autogen will scan the JS files
+// In production, __dirname is dist/swagger, so this points to dist/routes/index.js
+// In dev, __dirname is src/swagger (when using ts-node), but routes are in src/routes
+const routesPath = __dirname.includes('dist')
+  ? path.resolve(__dirname, '../routes/index.js')
+  : path.resolve(__dirname, '../routes/index');
+export const routes = [routesPath];
 
-swaggerAutogen({ openapi: '3.0.0' })(outputFile, routes, documentConfiguration)
-  .then(() => logger.info('Swagger Documentation Generated'))
-  .catch((error) => logger.info(error));
+// Generate swagger documentation and wait for completion
+// This ensures the file is fully written before workers try to read it
+const generateSwagger = async () => {
+  try {
+    logger.info(`Generating swagger documentation to: ${outputFile}`);
+    logger.info(`Scanning routes from: ${routes.join(', ')}`);
+    await swaggerAutogen({ openapi: '3.0.0' })(outputFile, routes, documentConfiguration);
+    logger.info('Swagger Documentation Generated');
+    
+    // Verify the file was created and has paths
+    if (fs.existsSync(outputFile)) {
+      const swaggerDoc = JSON.parse(fs.readFileSync(outputFile, { encoding: 'utf-8' }));
+      const pathCount = swaggerDoc.paths ? Object.keys(swaggerDoc.paths).length : 0;
+      logger.info(`Swagger file created with ${pathCount} paths: ${Object.keys(swaggerDoc.paths || {}).join(', ')}`);
+      
+      if (pathCount === 0) {
+        logger.warn('Swagger file generated but contains no paths! Check route files for swagger comments.');
+      }
+    } else {
+      logger.error(`Swagger file not found at: ${outputFile}`);
+    }
+  } catch (error) {
+    logger.error(`Failed to generate swagger documentation: ${error}`);
+    throw error;
+  }
+};
+
+// Export the promise so it can be awaited
+export default generateSwagger();
