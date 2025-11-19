@@ -77,9 +77,9 @@ export default (): Application => {
         swaggerDocumentPath = buildCopiedPath;
       }
     }
-    
+
     if (fs.existsSync(swaggerDocumentPath)) {
-      let swaggerDocument: any;
+      let swaggerDocument: { paths?: Record<string, unknown>; servers?: unknown[] };
       try {
         swaggerDocument = JSON.parse(fs.readFileSync(swaggerDocumentPath, { encoding: 'utf-8' }));
       } catch (parseError) {
@@ -91,10 +91,12 @@ export default (): Application => {
       const pathKeys = swaggerDocument.paths ? Object.keys(swaggerDocument.paths) : [];
       logger.info(`Swagger document loaded from: ${swaggerDocumentPath}`);
       logger.info(`Swagger paths found: ${pathKeys.length} - ${pathKeys.join(', ')}`);
-      
+
       // Warn if no paths found - this shouldn't happen
       if (pathKeys.length === 0) {
-        logger.error(`WARNING: Swagger document has no paths! File size: ${fs.statSync(swaggerDocumentPath).size} bytes`);
+        logger.error(
+          `WARNING: Swagger document has no paths! File size: ${fs.statSync(swaggerDocumentPath).size} bytes`
+        );
       }
 
       // Dynamically update server URL based on current environment
